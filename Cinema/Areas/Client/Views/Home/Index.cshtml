@@ -1,0 +1,119 @@
+﻿@model IEnumerable<Cinema.Models.Movie>
+@{
+    Layout = null;
+    ViewData["Title"] = "CinePlex";
+    var categories = ViewBag.Categories as IEnumerable<Cinema.Models.Category> ?? Enumerable.Empty<Cinema.Models.Category>();
+    int? activeCategory = ViewBag.CategoryId as int?;
+    string search = ViewBag.Search as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"]</title>
+  <link rel="stylesheet" href="~/css/style.css" />
+  <style>
+    .page-content { position: relative; z-index: 1; }
+    .search-bar {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      max-width: 320px;
+    }
+    .search-bar input {
+      background: none; border: none; outline: none;
+      color: var(--text-primary); font-size: 0.85rem; flex: 1;
+    }
+    .now-line { display: flex; align-items: center; justify-content: space-between; margin-top: 32px; }
+    .section-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); }
+    .section-label span { color: var(--gold); }
+    .film-count { font-size: 0.75rem; color: var(--text-muted); }
+    .film-synopsis { font-size: 0.68rem; color: var(--text-muted); line-height: 1.5; padding: 0 14px 10px; }
+    .film-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+    .film-footer .price { color: var(--gold); font-weight: 700; font-size: 0.85rem; }
+    .film-footer .when { font-size: 0.65rem; color: var(--text-muted); }
+    .empty-state { text-align: center; color: var(--text-muted); padding: 60px 0; }
+    a.film-link { color: inherit; text-decoration: none; display: block; }
+  </style>
+</head>
+<body>
+  <div class="page-content">
+
+    <div class="page-hero">
+      <h1>Choose <em>Your Movie</em></h1>
+      <p>Now showing — pick your favourite film</p>
+
+      <form method="get" style="display:flex; align-items:center; gap:16px; margin-top:20px; flex-wrap:wrap;">
+        <div class="search-bar">
+          <span style="color:var(--text-muted); font-size:1rem;">🔍</span>
+          <input type="text" name="search" value="@search" placeholder="Search movie name..." />
+          @if (activeCategory.HasValue)
+          {
+              <input type="hidden" name="categoryId" value="@activeCategory" />
+          }
+        </div>
+
+        <div class="filter-tabs">
+          <a class="filter-tab @(activeCategory == null ? "active" : "")"
+             href="@Url.Action("Index", new { search })">All</a>
+          @foreach (var c in categories)
+          {
+              <a class="filter-tab @(activeCategory == c.Id ? "active" : "")"
+                 href="@Url.Action("Index", new { categoryId = c.Id, search })">@c.Name</a>
+          }
+        </div>
+      </form>
+    </div>
+
+    <div class="now-line">
+      <div class="section-label">Now <span>Showing</span></div>
+      <div class="film-count">@Model.Count() Movies</div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">No movies found.</div>
+    }
+    else
+    {
+        <div class="film-grid">
+          @foreach (var movie in Model)
+          {
+              <div class="film-card">
+                <a class="film-link" asp-area="Client" asp-controller="Home" asp-action="Details" asp-route-id="@movie.Id">
+                  <img class="film-poster" src="~/images/movies/@movie.MainImg" alt="@movie.Name" loading="lazy"
+                       onerror="this.style.minHeight='260px'" />
+                  <div class="film-badge">@movie.Status</div>
+                  <div class="film-info">
+                    <div class="film-title">@movie.Name</div>
+                    <div class="film-meta">
+                      <span class="film-genre">@movie.Category?.Name</span>
+                      <span class="dot">·</span>
+                      <span>@movie.Cinema?.Name</span>
+                    </div>
+                  </div>
+                  <div class="film-synopsis">@movie.Description</div>
+                </a>
+                <div class="film-footer">
+                  <div>
+                    <div class="price">@movie.Price.ToString("N0") EGP</div>
+                    <div class="when">  @movie.DateTime</div>
+                  </div>
+                  <a class="btn btn-gold" asp-area="Client" asp-controller="Home" asp-action="Details" asp-route-id="@movie.Id">
+                    Details →
+                  </a>
+                </div>
+              </div>
+          }
+        </div>
+    }
+  </div>
+</body>
+</html>
