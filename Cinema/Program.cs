@@ -1,3 +1,5 @@
+using Cinema.Data;
+using Microsoft.EntityFrameworkCore;
 namespace Cinema
 {
     public class Program

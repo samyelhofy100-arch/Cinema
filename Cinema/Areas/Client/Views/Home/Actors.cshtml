@@ -1,0 +1,35 @@
+﻿@model List<Actor>
+
+@{
+    ViewData["Title"] = "Actors";
+}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title">Meet the Stars</h1>
+        <p class="page-hero__sub">Click an actor to see their movies</p>
+        <div class="page-search">
+            <input type="text" class="form-control" placeholder="Search actors..." data-filter-input autocomplete="off" />
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-4">
+        @foreach (var actor in Model)
+        {
+            <div class="col reveal" data-filter-item data-name="@actor.Name">
+                <a asp-action="Index" asp-route-actorId="@actor.Id" class="actor-card">
+                    <img src="~/Images/ActorImg/@actor.Img" class="actor-card__img" alt="@actor.Name" loading="lazy" data-fallback />
+                    <div class="actor-card__name">@actor.Name</div>
+                    <div class="actor-card__count">@actor.MovieActors.Count @(actor.MovieActors.Count == 1 ? "movie" : "movies")</div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <div class="empty-state">
+        <div style="font-size:3rem">🎭</div>
+        <h5>No actors match your search</h5>
+    </div>
+</div>

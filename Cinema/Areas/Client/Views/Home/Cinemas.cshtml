@@ -1,0 +1,43 @@
+﻿@model List<Cinemas>
+
+@{
+    ViewData["Title"] = "Cinemas";
+}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title">Our Cinemas</h1>
+        <p class="page-hero__sub">Pick a cinema and see what's showing</p>
+        <div class="page-search">
+            <input type="text" class="form-control" placeholder="Search cinemas..." data-filter-input autocomplete="off" />
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var cinema in Model)
+        {
+            <div class="col reveal" data-filter-item data-name="@cinema.Name">
+                <article class="cinema-card">
+                    <div class="cinema-card__img">
+                        <img src="~/Images/CinemaImg/@cinema.Img" alt="@cinema.Name" loading="lazy" data-fallback />
+                        <span class="cinema-card__count">@cinema.Movies.Count movies</span>
+                    </div>
+                    <div class="cinema-card__body">
+                        <h3 class="cinema-card__title">@cinema.Name</h3>
+                        <p class="cinema-card__desc">@cinema.Description</p>
+                    </div>
+                    <div class="cinema-card__footer">
+                        <a asp-action="Index" asp-route-cinemaId="@cinema.Id" class="btn btn-dark w-100">View movies</a>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+
+    <div class="empty-state">
+        <div style="font-size:3rem">🎞</div>
+        <h5>No cinemas match your search</h5>
+    </div>
+</div>

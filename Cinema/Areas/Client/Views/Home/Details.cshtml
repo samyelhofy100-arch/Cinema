@@ -1,0 +1,96 @@
+﻿@model Movie
+
+@{
+    ViewData["Title"] = Model.Name;
+    string poster = Url.Content("~/Images/MoiveImg/" + Model.MainImg);
+}
+
+<!-- Blurred backdrop -->
+<section class="detail-hero">
+    <div class="detail-hero__bg" style="background-image:url('@poster')"></div>
+</section>
+
+<div class="container detail-body">
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-3">
+            <img src="@poster" class="detail-poster" alt="@Model.Name" data-fallback />
+        </div>
+
+        <div class="col-md-8 col-lg-9">
+            <div class="detail-panel">
+                <h1 class="detail-title">@Model.Name</h1>
+
+                <div>
+                    <span class="chip chip--tag">@Model.Category?.Name</span>
+                    <a class="chip chip--cinema" asp-action="Index" asp-route-cinemaId="@Model.CinemaId">📍 @Model.Cinema?.Name</a>
+                    @if (Model.Status)
+                    {
+                        <span class="chip chip--on">Available</span>
+                    }
+                    else
+                    {
+                        <span class="chip chip--off">Not available</span>
+                    }
+                </div>
+
+                <div class="detail-price">@Model.Price.ToString("0.##") <small>EGP</small></div>
+
+                @if (Model.DateTime.HasValue)
+                {
+                    <p class="detail-date">🗓 @Model.DateTime.Value.ToString("dddd, dd MMM yyyy - hh:mm tt")</p>
+                }
+
+                <p class="detail-desc">@Model.Description</p>
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-outline-dark">&larr; Back to movies</a>
+                    <a asp-action="Index" asp-route-cinemaId="@Model.CinemaId" class="btn btn-dark">More at @Model.Cinema?.Name</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.SubImage.Any())
+    {
+        <h3 class="section-title">Gallery</h3>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+            @foreach (var img in Model.SubImage)
+            {
+                <div class="col reveal">
+                    <a href="#" class="gallery-item" data-bs-toggle="modal" data-bs-target="#lightbox"
+                       data-src="@Url.Content("~/Images/MoiveImg/" + img.Img)">
+                        <img src="~/Images/MoiveImg/@img.Img" alt="@Model.Name" loading="lazy" data-fallback />
+                    </a>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.MovieActors.Any())
+    {
+        <h3 class="section-title">Cast</h3>
+        <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-4">
+            @foreach (var ma in Model.MovieActors)
+            {
+                <div class="col reveal">
+                    <a asp-action="Index" asp-route-actorId="@ma.Actor.Id" class="cast-card">
+                        <img src="~/Images/ActorImg/@ma.Actor.Img" alt="@ma.Actor.Name" loading="lazy" data-fallback />
+                        <div>@ma.Actor.Name</div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Lightbox -->
+<div class="modal fade" id="lightbox" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-transparent border-0">
+            <div class="text-end">
+                <button type="button" class="btn-close btn-close-white mb-2" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <img id="lightboxImg" class="img-fluid rounded lightbox-img mx-auto" alt="@Model.Name" />
+        </div>
+    </div>
+</div>

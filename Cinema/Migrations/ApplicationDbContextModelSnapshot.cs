@@ -96,7 +96,7 @@ namespace Cinema.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CinemasId")
+                    b.Property<int>("CinemaId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("DateTime")
@@ -124,7 +124,7 @@ namespace Cinema.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CinemasId");
+                    b.HasIndex("CinemaId");
 
                     b.ToTable("Movies");
                 });
@@ -174,11 +174,15 @@ namespace Cinema.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Cinema.Models.Cinemas", null)
+                    b.HasOne("Cinema.Models.Cinemas", "Cinema")
                         .WithMany("Movies")
-                        .HasForeignKey("CinemasId");
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("Cinema");
                 });
 
             modelBuilder.Entity("Cinema.Models.MovieActor", b =>

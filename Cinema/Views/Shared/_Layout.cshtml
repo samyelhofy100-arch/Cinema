@@ -1,53 +1,87 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Cinema</title>
-    <script type="importmap"></script>
-    <link href="~/css/site.css" rel="stylesheet" />
+    <script>document.documentElement.classList.add("js");</script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Cinema.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cinema.css" asp-append-version="true" />
 </head>
 <body>
+    @{
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+        string Active(params string[] actions) => actions.Contains(currentAction) ? "active" : "";
+    }
+
+    <!-- Navbar -->
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Cinema</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-md site-nav sticky-top" data-bs-theme="dark">
+            <div class="container">
+                <a class="navbar-brand" asp-area="Client" asp-controller="Home" asp-action="Index">
+                    🎬 <span>Cinema</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="siteNav">
+                    <ul class="navbar-nav ms-auto gap-md-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @Active("Index", "Details")" asp-area="Client" asp-controller="Home" asp-action="Index">Movies</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link @Active("Cinemas")" asp-area="Client" asp-controller="Home" asp-action="Cinemas">Cinemas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @Active("Actors")" asp-area="Client" asp-controller="Home" asp-action="Actors">Actors</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <main class="site-main" role="main">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
         <div class="container">
-            &copy; 2026 - Cinema - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row g-4 py-5">
+                <div class="col-md-5">
+                    <div class="site-footer__brand">🎬 <span>Cinema</span></div>
+                    <p class="site-footer__text">
+                        Browse the latest movies, discover the cinemas showing them,
+                        and meet the stars behind the screen.
+                    </p>
+                </div>
+                <div class="col-6 col-md-3 offset-md-1">
+                    <h6 class="site-footer__title">Explore</h6>
+                    <ul class="list-unstyled site-footer__links">
+                        <li><a asp-area="Client" asp-controller="Home" asp-action="Index">Movies</a></li>
+                        <li><a asp-area="Client" asp-controller="Home" asp-action="Cinemas">Cinemas</a></li>
+                        <li><a asp-area="Client" asp-controller="Home" asp-action="Actors">Actors</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6 class="site-footer__title">Quick info</h6>
+                    <ul class="list-unstyled site-footer__links">
+                        <li>Daily shows</li>
+                        <li>Online booking</li>
+                        <li>Great sound &amp; picture</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="site-footer__bottom">
+                &copy; @DateTime.Now.Year Cinema. All rights reserved.
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/app.js"></script>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/cinema.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>

@@ -1,0 +1,230 @@
+/* =========================================================
+   Cinema site theme (dark) - shared by all Client pages
+   ========================================================= */
+:root {
+    --mv-bg: #0d0f1e;
+    --mv-surface: #171a2f;
+    --mv-surface-2: #1f2340;
+    --mv-border: rgba(255, 255, 255, .08);
+    --mv-dark: #0a0c18;
+    --mv-dark-2: #151934;
+    --mv-accent: #ffc107;
+    --mv-text: #eceefb;
+    --mv-muted: #9aa0c0;
+    --mv-radius: 16px;
+    --mv-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+    --mv-shadow-hover: 0 16px 36px rgba(0, 0, 0, .55);
+}
+
+body {
+    background: var(--mv-bg);
+    color: var(--mv-text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.site-main { flex: 1 0 auto; }
+a { color: var(--mv-accent); }
+a:hover { color: #ffd54f; }
+
+/* ---------- Buttons (dark theme) ---------- */
+.btn-dark { background: var(--mv-accent); border-color: var(--mv-accent); color: #14172b; font-weight: 600; }
+.btn-dark:hover, .btn-dark:focus { background: #ffd54f; border-color: #ffd54f; color: #14172b; }
+.btn-outline-dark { color: var(--mv-text); border-color: rgba(255, 255, 255, .3); }
+.btn-outline-dark:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .5); color: #fff; }
+
+/* ---------- Navbar ---------- */
+.site-nav {
+    background: rgba(10, 12, 24, .92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--mv-border);
+    padding: .6rem 0;
+}
+.site-nav .navbar-brand { font-weight: 800; color: #fff; letter-spacing: .5px; }
+.site-nav .navbar-brand span { color: var(--mv-accent); }
+.site-nav .nav-link {
+    color: rgba(255, 255, 255, .72);
+    font-weight: 600;
+    padding: .45rem 1.1rem;
+    border-radius: 999px;
+    transition: background .2s ease, color .2s ease;
+}
+.site-nav .nav-link:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.site-nav .nav-link.active { color: #14172b; background: var(--mv-accent); }
+
+/* ---------- Footer ---------- */
+.site-footer { background: #080a14; color: rgba(255, 255, 255, .65); margin-top: 70px; border-top: 1px solid var(--mv-border); }
+.site-footer__brand { font-size: 1.4rem; font-weight: 800; color: #fff; }
+.site-footer__brand span { color: var(--mv-accent); }
+.site-footer__text { margin-top: 10px; max-width: 420px; }
+.site-footer__title { color: #fff; font-weight: 700; margin-bottom: 14px; }
+.site-footer__links li { margin-bottom: 8px; }
+.site-footer__links a { color: rgba(255, 255, 255, .65); text-decoration: none; transition: color .2s ease; }
+.site-footer__links a:hover { color: var(--mv-accent); }
+.site-footer__bottom {
+    border-top: 1px solid var(--mv-border);
+    padding: 18px 0;
+    text-align: center;
+    font-size: .88rem;
+}
+
+/* ---------- Page hero (Cinemas / Actors) ---------- */
+.page-hero {
+    position: relative;
+    background:
+        radial-gradient(600px 220px at 20% 0%, rgba(255, 193, 7, .14), transparent 70%),
+        radial-gradient(700px 260px at 90% 100%, rgba(111, 76, 255, .22), transparent 70%),
+        linear-gradient(180deg, var(--mv-dark-2), var(--mv-bg));
+    color: #fff;
+    padding: 56px 0 44px;
+    text-align: center;
+    margin-bottom: 34px;
+    border-bottom: 1px solid var(--mv-border);
+}
+.page-hero__title { font-weight: 800; margin: 0; }
+.page-hero__sub { color: var(--mv-muted); margin: 6px 0 22px; }
+.page-search { max-width: 440px; margin: 0 auto; }
+.page-search .form-control {
+    height: 46px; border-radius: 999px; padding: 0 22px;
+    background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .15); color: #fff;
+}
+.page-search .form-control::placeholder { color: rgba(255, 255, 255, .5); }
+.page-search .form-control:focus {
+    background: rgba(255, 255, 255, .1); border-color: var(--mv-accent);
+    box-shadow: 0 0 0 .2rem rgba(255, 193, 7, .2); color: #fff;
+}
+
+/* ---------- Reveal on scroll (only when JS is on) ---------- */
+html.js .reveal { opacity: 0; transform: translateY(18px); }
+html.js .reveal.is-visible { opacity: 1; transform: none; transition: opacity .5s ease, transform .5s ease; }
+
+/* ---------- Cinema cards ---------- */
+.cinema-card {
+    background: var(--mv-surface);
+    border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--mv-shadow);
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.cinema-card:hover { transform: translateY(-6px); box-shadow: var(--mv-shadow-hover); border-color: rgba(255, 193, 7, .35); }
+.cinema-card__img { position: relative; height: 210px; overflow: hidden; background: var(--mv-surface-2); }
+.cinema-card__img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.cinema-card:hover .cinema-card__img img { transform: scale(1.07); }
+.cinema-card__img::after {
+    content: ""; position: absolute; inset: 40% 0 0 0;
+    background: linear-gradient(transparent, rgba(13, 15, 30, .85));
+}
+.cinema-card__count {
+    position: absolute; right: 12px; bottom: 12px; z-index: 1;
+    background: var(--mv-accent); color: #1d1d1d;
+    font-weight: 700; font-size: .8rem; padding: 4px 12px; border-radius: 999px;
+}
+.cinema-card__body { padding: 16px 18px 6px; flex: 1; }
+.cinema-card__title { font-size: 1.15rem; font-weight: 700; margin: 0 0 6px; color: var(--mv-text); }
+.cinema-card__desc {
+    color: var(--mv-muted); font-size: .9rem; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cinema-card__footer { padding: 14px 18px 18px; }
+
+/* ---------- Actor cards ---------- */
+.actor-card {
+    display: block;
+    background: var(--mv-surface);
+    border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius);
+    padding: 22px 12px 18px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--mv-text);
+    height: 100%;
+    box-shadow: var(--mv-shadow);
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.actor-card:hover { transform: translateY(-6px); box-shadow: var(--mv-shadow-hover); border-color: rgba(255, 193, 7, .35); color: var(--mv-text); }
+.actor-card__img {
+    width: 130px; height: 130px; border-radius: 50%; object-fit: cover;
+    border: 4px solid var(--mv-surface); box-shadow: 0 0 0 3px var(--mv-accent);
+    background: var(--mv-surface-2); transition: transform .35s ease;
+}
+.actor-card:hover .actor-card__img { transform: scale(1.06); }
+.actor-card__name { font-weight: 700; margin: 14px 0 4px; }
+.actor-card__count { font-size: .82rem; color: var(--mv-muted); }
+
+.empty-state { text-align: center; padding: 60px 0; color: var(--mv-muted); display: none; }
+.empty-state.show { display: block; }
+
+/* ---------- Movie details ---------- */
+.detail-hero { position: relative; height: 300px; overflow: hidden; background: var(--mv-dark); }
+.detail-hero__bg {
+    position: absolute; inset: -30px;
+    background-size: cover; background-position: center;
+    filter: blur(16px) brightness(.45) saturate(1.2);
+}
+.detail-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(transparent 35%, var(--mv-bg));
+}
+.detail-body { margin-top: -190px; position: relative; z-index: 1; }
+.detail-poster {
+    width: 100%; border-radius: var(--mv-radius);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .65);
+    background: var(--mv-surface-2);
+    border: 1px solid var(--mv-border);
+}
+.detail-panel {
+    background: var(--mv-surface); border: 1px solid var(--mv-border);
+    border-radius: var(--mv-radius);
+    padding: 26px 28px; box-shadow: var(--mv-shadow);
+    height: 100%;
+}
+.detail-title { font-weight: 800; margin: 0 0 12px; color: #fff; }
+.chip {
+    display: inline-block; padding: 4px 14px; border-radius: 999px;
+    font-size: .82rem; font-weight: 600; text-decoration: none; margin: 0 6px 6px 0;
+}
+.chip--tag { background: rgba(255, 193, 7, .14); color: var(--mv-accent); }
+.chip--cinema { background: rgba(255, 255, 255, .09); color: #fff; }
+.chip--cinema:hover { background: rgba(255, 255, 255, .16); color: var(--mv-accent); }
+.chip--on { background: rgba(25, 135, 84, .22); color: #4cd694; }
+.chip--off { background: rgba(255, 255, 255, .08); color: var(--mv-muted); }
+.detail-price { font-size: 1.7rem; font-weight: 800; margin: 8px 0 14px; color: var(--mv-accent); }
+.detail-price small { font-size: .9rem; color: var(--mv-muted); font-weight: 600; }
+.detail-desc { color: #c4c8e0; line-height: 1.85; }
+.detail-date { color: var(--mv-muted); font-size: .92rem; }
+
+.section-title { font-weight: 800; margin: 48px 0 18px; position: relative; padding-left: 14px; color: #fff; }
+.section-title::before {
+    content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 5px; border-radius: 4px; background: var(--mv-accent);
+}
+
+.gallery-item {
+    display: block; border-radius: 12px; overflow: hidden;
+    aspect-ratio: 16 / 10; background: var(--mv-surface-2); cursor: zoom-in;
+    border: 1px solid var(--mv-border);
+    box-shadow: var(--mv-shadow);
+}
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
+.gallery-item:hover img { transform: scale(1.08); }
+
+.cast-card { display: block; text-align: center; text-decoration: none; color: var(--mv-text); }
+.cast-card img {
+    width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 0 0 3px var(--mv-bg), 0 0 0 5px var(--mv-accent);
+    background: var(--mv-surface-2); transition: transform .3s ease;
+}
+.cast-card:hover img { transform: scale(1.08); }
+.cast-card div { margin-top: 12px; font-size: .88rem; font-weight: 600; }
+.cast-card:hover { color: var(--mv-accent); }
+
+.lightbox-img { max-height: 80vh; object-fit: contain; }
+
+@media (max-width: 767px) {
+    .detail-body { margin-top: -150px; }
+    .detail-poster { max-width: 260px; display: block; margin: 0 auto 18px; }
+}
