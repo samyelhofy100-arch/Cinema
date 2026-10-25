@@ -1,9 +1,3 @@
-using Cinema.Data;
-using Cinema.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-
 namespace Cinema.Areas.Client.Controllers
 {
     [Area("Client")]

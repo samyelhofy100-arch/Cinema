@@ -1,0 +1,52 @@
+﻿@model Cinema.Models.Cinemas
+
+@{
+    ViewData["Title"] = "Cinema Details";
+}
+
+<div class="container py-4">
+    <div class="card border-0 shadow-sm bg-dark text-white p-4">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-3 text-center">
+                @if (!string.IsNullOrEmpty(Model.Img))
+                {
+                    <img src="/Images/CinemaImg/@Model.Img" class="rounded shadow" style="width: 150px; height: 150px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" style="width: 150px; height: 150px; margin: 0 auto;">
+                        No Image
+                    </div>
+                }
+            </div>
+            <div class="col-md-9">
+                <h2 class="fw-bold">@Model.Name</h2>
+                <p class="text-muted">@(Model.Description ?? "No description available.")</p>
+                <span class="badge bg-warning text-dark">Total Movies: @(Model.Movies?.Count ?? 0)</span>
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-3">Movies in this Cinema</h4>
+        @if (Model.Movies != null && Model.Movies.Any())
+        {
+            <ul class="list-group list-group-flush bg-transparent">
+                @foreach (var movie in Model.Movies)
+                {
+                    <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span>@movie.Name</span>
+                        <span class="badge bg-secondary">$@movie.Price</span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">No movies assigned to this cinema yet.</p>
+        }
+
+        <div class="mt-4">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>

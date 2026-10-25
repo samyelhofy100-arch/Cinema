@@ -1,0 +1,54 @@
+﻿@model Cinema.Models.Cinemas
+
+@{
+    ViewData["Title"] = "Edit Cinema";
+}
+
+<div class="container py-4">
+    <div class="card border-0 shadow-sm bg-dark text-white p-4">
+        <h2 class="fw-bold mb-4">Edit Cinema</h2>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Img" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Cinema Name</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Description</label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Current Image</label>
+                <div>
+                    @if (!string.IsNullOrEmpty(Model.Img))
+                    {
+                        <img src="/Images/CinemaImg/@Model.Img" class="rounded mb-2" style="width: 100px; height: 100px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <p class="text-muted small">No image uploaded</p>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Change Image (Optional)</label>
+                <input type="file" name="ImageFile" class="form-control" accept="image/*" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning fw-semibold">Save Changes</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

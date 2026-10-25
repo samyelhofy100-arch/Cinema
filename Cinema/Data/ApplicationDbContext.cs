@@ -1,7 +1,4 @@
-﻿using Cinema.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace Cinema.Data
+﻿namespace Cinema.Data
 {
     public class ApplicationDbContext : DbContext
     {

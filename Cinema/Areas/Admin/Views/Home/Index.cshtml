@@ -1,0 +1,224 @@
+@model IEnumerable<Cinema.Models.Movie>
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid py-3">
+    <!-- رأس الصفحة / المسار -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold">Dashboard</h2>
+        <ol class="breadcrumb mb-0 bg-transparent p-0">
+           
+        </ol>
+    </div>
+
+    <!-- 1. البطاقات الأربع الملونة العلوية (على غرار AdminLTE) -->
+    <div class="row g-3 mb-4">
+        <!-- البطاقة الأولى: الأزرق (الأفلام) -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-primary text-white p-3 rounded-3 position-relative shadow-sm" style="background-color: #007bff !important;">
+                <div class="inner">
+                    <h3 class="fw-bold fs-1 mb-0">@ViewBag.MoviesCount</h3>
+                    <p class="mb-2">Total Movies</p>
+                </div>
+                <div class="icon position-absolute end-0 top-0 p-3 opacity-25">
+                    <i class="bi bi-film fs-1"></i>
+                </div>
+                <a asp-controller="Movies" asp-action="Index" class="small-box-footer text-white text-decoration-none d-block bg-black bg-opacity-15 py-1 px-2 rounded text-center small mt-2">
+                    More info <i class="bi bi-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- البطاقة الثانية: الأخضر (المتاحة) -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success text-white p-3 rounded-3 position-relative shadow-sm" style="background-color: #28a745 !important;">
+                <div class="inner">
+                    <h3 class="fw-bold fs-1 mb-0">@ViewBag.AvailableMovies</h3>
+                    <p class="mb-2">Available Movies</p>
+                </div>
+                <div class="icon position-absolute end-0 top-0 p-3 opacity-25">
+                    <i class="bi bi-check-circle fs-1"></i>
+                </div>
+                <a asp-controller="Movies" asp-action="Index" class="small-box-footer text-white text-decoration-none d-block bg-black bg-opacity-15 py-1 px-2 rounded text-center small mt-2">
+                    More info <i class="bi bi-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- البطاقة الثالثة: الأصفر/البرتقالي (الممثلين) -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning text-dark p-3 rounded-3 position-relative shadow-sm" style="background-color: #ffc107 !important;">
+                <div class="inner">
+                    <h3 class="fw-bold fs-1 mb-0">@ViewBag.ActorsCount</h3>
+                    <p class="mb-2">Total Actors</p>
+                </div>
+                <div class="icon position-absolute end-0 top-0 p-3 opacity-25">
+                    <i class="bi bi-people fs-1"></i>
+                </div>
+                <a asp-controller="Actors" asp-action="Index" class="small-box-footer text-dark text-decoration-none d-block bg-black bg-opacity-15 py-1 px-2 rounded text-center small mt-2 fw-semibold">
+                    More info <i class="bi bi-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- البطاقة الرابعة: الأحمر (السينمات والتصنيفات) -->
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger text-white p-3 rounded-3 position-relative shadow-sm" style="background-color: #dc3545 !important;">
+                <div class="inner">
+                    <h3 class="fw-bold fs-1 mb-0">@ViewBag.CinemasCount</h3>
+                    <p class="mb-2">Cinemas & Categories</p>
+                </div>
+                <div class="icon position-absolute end-0 top-0 p-3 opacity-25">
+                    <i class="bi bi-building fs-1"></i>
+                </div>
+                <a asp-controller="Cinemas" asp-action="Index" class="small-box-footer text-white text-decoration-none d-block bg-black bg-opacity-15 py-1 px-2 rounded text-center small mt-2">
+                    More info <i class="bi bi-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. قسم الرسم البياني (Sales Value / Analytics) وصندوق المعلومات الجانبي -->
+    <div class="row g-3 mb-4">
+        <!-- الرسم البياني الخطي المظلل -->
+        <div class="col-lg-8">
+            <div class="card bg-dark text-white border-0 shadow-sm p-4 rounded-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="bi bi-pie-chart-fill text-warning me-2"></i> System Growth Value</h5>
+                    <span class="badge bg-secondary">Monthly Analytics</span>
+                </div>
+                <div style="height: 330px;">
+                    <canvas id="adminChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- الصندوق الجانبي (ملخص النظام / مشابه للبطاقة الزرقاء بالصورة) -->
+        <div class="col-lg-4">
+            <div class="card bg-primary text-white border-0 shadow-sm p-4 rounded-3 h-100 d-flex flex-column justify-content-between" style="background: linear-gradient(135deg, #0d6efd 0%, #004085 100%) !important;">
+                <div>
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock-fill me-2"></i> System Overview</h5>
+                    <p class="small text-white-50">This dashboard gives you a full control over movies, pricing, actors mapping, and cinema branches with real-time updates.</p>
+                    <hr class="border-light opacity-25" />
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span>Active Movies Rate</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="progress bg-black bg-opacity-25" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span>Database Status</span>
+                            <span class="text-success fw-bold">Connected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center pt-3 border-top border-light border-opacity-10">
+                    <span class="small text-white-50"><i class="bi bi-clock me-1"></i> Last sync: Just now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. جدول أحدث الأفلام -->
+    <div class="card bg-dark text-white border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Latest Movies</h4>
+                <a asp-controller="Movies" asp-action="Create" class="btn btn-warning btn-sm fw-semibold">+ Add Movie</a>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>NAME</th>
+                                <th>CATEGORY</th>
+                                <th>CINEMA</th>
+                                <th>PRICE</th>
+                                <th class="text-end">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var movie in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        @if (!string.IsNullOrEmpty(movie.MainImg))
+                                        {
+                                            <img src="/Images/MoiveImg/@movie.MainImg" class="rounded me-2" style="width: 35px; height: 45px; object-fit: cover;" />
+                                        }
+                                        @movie.Name
+                                    </td>
+                                    <td><span class="badge bg-secondary">@movie.Category?.Name</span></td>
+                                    <td>@movie.Cinema?.Name</td>
+                                    <td class="text-success fw-bold">$@movie.Price</td>
+                                    <td class="text-end">
+                                        <a asp-controller="Movies" asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-sm btn-primary">Edit</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted text-center py-3 mb-0">No movies found.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- تشغيل مكتبة الرسم البياني الخطي المظلل (Area Chart) -->
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('adminChart').getContext('2d');
+        const adminChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Platform Activity',
+                    data: [10, 25, 18, 40, 35, 55, 50, 65, 70, 85, @ViewBag.MoviesCount, 95],
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffc107',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#ffffff' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#adb5bd' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    y: {
+                        ticks: { color: '#adb5bd' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+    </script>
+}

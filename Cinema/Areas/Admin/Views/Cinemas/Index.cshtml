@@ -1,0 +1,74 @@
+﻿@model IEnumerable<Cinema.Models.Cinemas>
+
+@{
+    ViewData["Title"] = "Cinemas Management";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-white">Cinemas Management</h2>
+            <p class="text-muted">Manage all cinemas in the system.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-warning fw-semibold">
+            <i class="bi bi-plus-lg"></i> Add New Cinema
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm bg-dark text-white">
+        <div class="card-body p-4">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Cinema Name</th>
+                                <th>Description</th>
+                                <th>Movies Count</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cinema in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(cinema.Img))
+                                        {
+                                            <img src="/Images/CinemaImg/@cinema.Img" alt="@cinema.Name" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">No Image</span>
+                                        }
+                                    </td>
+                                    <td class="fw-semibold">@cinema.Name</td>
+                                    <td class="text-muted small">@(cinema.Description ?? "No description")</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@(cinema.Movies?.Count ?? 0) Movies</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Edit" asp-route-id="@cinema.Id" class="btn btn-sm btn-primary me-1">Edit</a>
+                                        <a asp-action="Details" asp-route-id="@cinema.Id" class="btn btn-sm btn-info text-white me-1">Details</a>
+                                        <form asp-action="Delete" asp-route-id="@cinema.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this cinema?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted mb-3">No cinemas found.</p>
+                    <a asp-action="Create" class="btn btn-outline-warning">Create First Cinema</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -29,7 +29,7 @@ namespace Cinema
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{area=Client}/{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
+                pattern: "{area=Admin}/{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
 
             app.Run();
         }

@@ -1,0 +1,93 @@
+﻿@model IEnumerable<Cinema.Models.Movie>
+
+@{
+    ViewData["Title"] = "Movies Management";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-white">Movies Management</h2>
+            <p class="text-muted">Manage all movies, prices, and assignments.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-warning fw-semibold">
+            <i class="bi bi-plus-lg"></i> Add New Movie
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm bg-dark text-white">
+        <div class="card-body p-4">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Movie Name</th>
+                                <th>Category</th>
+                                <th>Cinema</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var movie in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(movie.MainImg))
+                                        {
+                                            <img src="/movies/@movie.MainImg" alt="@movie.Name" class="rounded" style="width: 50px; height: 60px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">No Image</span>
+                                        }
+                                    </td>
+                                    <td class="fw-semibold">@movie.Name</td>
+                                    <td><span class="badge bg-secondary">@movie.Category?.Name</span></td>
+                                    <td>@movie.Cinema?.Name</td>
+                                    <td class="text-success fw-bold">$@movie.Price</td>
+                                    <td>
+                                        @if (movie.Status)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Details" asp-route-id="@movie.Id" class="btn btn-sm btn-info text-white me-1">Details</a>
+                                        <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-sm btn-primary me-1">Edit</a>
+                                        <form asp-action="Delete" asp-route-id="@movie.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this movie?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted mb-3">No movies found.</p>
+                    <a asp-action="Create" class="btn btn-outline-warning">Create First Movie</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

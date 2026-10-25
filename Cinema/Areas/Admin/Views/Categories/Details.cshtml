@@ -1,0 +1,35 @@
+﻿@model Cinema.Models.Category
+
+@{
+    ViewData["Title"] = "Category Details";
+}
+
+<div class="container py-4">
+    <div class="card border-0 shadow-sm bg-dark text-white p-4">
+        <h2 class="fw-bold mb-2">@Model.Name</h2>
+        <p class="text-muted mb-4">Total Movies: <span class="badge bg-warning text-dark">@(Model.Movies?.Count ?? 0)</span></p>
+
+        <h4 class="fw-bold mb-3">Movies in this Category</h4>
+        @if (Model.Movies != null && Model.Movies.Any())
+        {
+            <ul class="list-group list-group-flush bg-transparent">
+                @foreach (var movie in Model.Movies)
+                {
+                    <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span>@movie.Name</span>
+                        <span class="badge bg-secondary">$@movie.Price</span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">No movies found in this category.</p>
+        }
+
+        <div class="mt-4">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>
