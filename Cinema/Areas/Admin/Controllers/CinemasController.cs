@@ -1,12 +1,19 @@
-﻿using Cinema.Helpers;
+﻿
+using Cinema.Data;
+using Cinema.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class CinemasController : Controller
     {
-        private readonly ApplicationDbContext _context = new ApplicationDbContext();
+        private readonly ApplicationDbContext _context =
+            new ApplicationDbContext();
+
+        private readonly string Folder =
+            Path.Combine("Images", "CinemaImg");
 
         public IActionResult Index()
         {
@@ -17,6 +24,7 @@ namespace Cinema.Areas.Admin.Controllers
 
             return View(cinemas);
         }
+
         public IActionResult Details(int id)
         {
             var cinema = _context.Cinemas
@@ -28,6 +36,7 @@ namespace Cinema.Areas.Admin.Controllers
 
             return View(cinema);
         }
+
         [HttpGet]
         public IActionResult Create()
         {
@@ -35,35 +44,54 @@ namespace Cinema.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        
         public IActionResult Create(Cinemas cinema, IFormFile? ImageFile)
         {
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                if (!ImageHelper.IsValid(ImageFile, out var error))
+                var extension =
+                    Path.GetExtension(ImageFile.FileName).ToLowerInvariant();
+
+                var allowedExtensions = new[]
                 {
-                    ModelState.AddModelError("Img", error);
+                    ".jpg", ".jpeg", ".png", ".webp"
+                };
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        "Img",
+                        "Only JPG, JPEG, PNG, and WEBP images are allowed.");
+                }
+                else if (ImageFile.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError(
+                        "Img",
+                        "Image size must not exceed 5 MB.");
                 }
                 else
                 {
-                    cinema.Img = ImageHelper.Save(ImageFile, "wwwroot/Images", "CinemaImg");
+                    cinema.Img = SaveImage(ImageFile);
                 }
             }
 
             if (!ModelState.IsValid)
-            {
                 return View(cinema);
-            }
 
             _context.Cinemas.Add(cinema);
             _context.SaveChanges();
 
-            TempData["Success"] = $"Cinema \"{cinema.Name}\" was created successfully.";
+            TempData["Success"] =
+                $"Cinema \"{cinema.Name}\" was created successfully.";
+
             return RedirectToAction(nameof(Index));
         }
+
         [HttpGet]
         public IActionResult Edit(int id)
         {
             var cinema = _context.Cinemas.Find(id);
+
             if (cinema == null)
                 return NotFound();
 
@@ -74,35 +102,58 @@ namespace Cinema.Areas.Admin.Controllers
         public IActionResult Edit(Cinemas input, IFormFile? ImageFile)
         {
             var cinema = _context.Cinemas.Find(input.Id);
+
             if (cinema == null)
                 return NotFound();
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                if (!ImageHelper.IsValid(ImageFile, out var error))
+                var extension =
+                    Path.GetExtension(ImageFile.FileName).ToLowerInvariant();
+
+                var allowedExtensions = new[]
                 {
-                    ModelState.AddModelError("Img", error);
+                    ".jpg", ".jpeg", ".png", ".webp"
+                };
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        "Img",
+                        "Only JPG, JPEG, PNG, and WEBP images are allowed.");
+                }
+                else if (ImageFile.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError(
+                        "Img",
+                        "Image size must not exceed 5 MB.");
+                }
+
+                if (!ModelState.IsValid)
                     return View(input);
-                }
 
-                if (!string.IsNullOrEmpty(cinema.Img))
-                {
-                    ImageHelper.Delete("wwwroot/Images", "CinemaImg", cinema.Img);
-                }
+                var newImage = SaveImage(ImageFile);
 
-                cinema.Img = ImageHelper.Save(ImageFile, "wwwroot/Images", "CinemaImg");
+                DeleteImage(cinema.Img);
 
-                
+                cinema.Img = newImage;
             }
+
+            if (!ModelState.IsValid)
+                return View(input);
 
             cinema.Name = input.Name;
             cinema.Description = input.Description;
 
             _context.SaveChanges();
 
-            TempData["Success"] = $"Cinema \"{cinema.Name}\" was updated successfully.";
+            TempData["Success"] =
+                $"Cinema \"{cinema.Name}\" was updated successfully.";
+
             return RedirectToAction(nameof(Index));
         }
+
+       
         public IActionResult Delete(int id)
         {
             var cinema = _context.Cinemas
@@ -112,16 +163,65 @@ namespace Cinema.Areas.Admin.Controllers
             if (cinema == null)
                 return NotFound();
 
-            if (!string.IsNullOrEmpty(cinema.Img))
+            if (cinema.Movies.Any())
             {
-                ImageHelper.Delete("wwwroot/Images", "CinemaImg", cinema.Img);
+                TempData["Error"] =
+                    "Cannot delete a cinema that has movies assigned to it.";
+
+                return RedirectToAction(nameof(Index));
             }
+
+            DeleteImage(cinema.Img);
+
             _context.Cinemas.Remove(cinema);
             _context.SaveChanges();
 
-            TempData["Success"] = $"Cinema \"{cinema.Name}\" was deleted successfully.";
+            TempData["Success"] =
+                $"Cinema \"{cinema.Name}\" was deleted successfully.";
+
             return RedirectToAction(nameof(Index));
         }
 
+        private string SaveImage(IFormFile imageFile)
+        {
+            var folderPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                Folder);
+
+            Directory.CreateDirectory(folderPath);
+
+            var extension =
+                Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+
+            var filePath = Path.Combine(folderPath, fileName);
+
+            using var stream = new FileStream(
+                filePath,
+                FileMode.Create);
+
+            imageFile.CopyTo(stream);
+
+            return fileName;
         }
+
+        private void DeleteImage(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return;
+
+            var safeFileName = Path.GetFileName(fileName);
+
+            var filePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                Folder,
+                safeFileName);
+
+            if (System.IO.File.Exists(filePath))
+                System.IO.File.Delete(filePath);
+        }
+    }
 }

@@ -1,8 +1,4 @@
-﻿using Cinema.Data;
-using Cinema.Helpers;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
+﻿
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
@@ -10,15 +6,37 @@ namespace Cinema.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext context = new ApplicationDbContext();
 
-        private const string Folder = "movies";
+        private const string Folder = "Images/MoiveImg";
+        private const long MaxImageSize = 5 * 1024 * 1024;
 
-        public IActionResult Index()
+        private readonly string[] AllowedExtensions =
         {
+            ".jpg", ".jpeg", ".png", ".webp"
+        };
+
+        public IActionResult Index(int page = 1)
+        {
+            int pageSize = 8;
+            int totalMovies = context.Movies.Count();
+
+            int totalPages = (int)Math.Ceiling(
+                totalMovies / (double)pageSize
+            );
+
+            page = totalPages == 0
+                ? 1
+                : Math.Clamp(page, 1, totalPages);
+
             var movies = context.Movies
                 .Include(m => m.Category)
                 .Include(m => m.Cinema)
                 .OrderBy(m => m.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
 
             return View(movies);
         }
@@ -31,6 +49,7 @@ namespace Cinema.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        
         public IActionResult Create(
             Movie movie,
             IFormFile? ImageFile,
@@ -39,67 +58,84 @@ namespace Cinema.Areas.Admin.Controllers
         {
             if (ImageFile == null || ImageFile.Length == 0)
             {
-                ModelState.AddModelError("MainImg", "Please select a main image.");
+                ModelState.AddModelError(
+                    "ImageFile",
+                    "Please select a main image."
+                );
             }
-            else if (!ImageHelper.IsValid(ImageFile, out var error))
+            else if (!IsValidImage(ImageFile, out string error))
             {
-                ModelState.AddModelError("MainImg", error);
+                ModelState.AddModelError("ImageFile", error);
             }
 
             if (SubImages != null)
             {
-                foreach (var image in SubImages.Where(x => x != null && x.Length > 0))
+                foreach (var image in SubImages.Where(
+                    x => x != null && x.Length > 0))
                 {
-                    if (!ImageHelper.IsValid(image, out var subError))
+                    if (!IsValidImage(image, out string error))
                     {
-                        ModelState.AddModelError("SubImages", subError);
+                        ModelState.AddModelError("SubImages", error);
                     }
                 }
             }
 
             if (!ModelState.IsValid)
             {
+                var errors = ModelState
+                    .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+                    .SelectMany(x => x.Value!.Errors.Select(e =>
+                        $"{x.Key}: {e.ErrorMessage}"));
+
+                TempData["CreateErrors"] = string.Join(" | ", errors);
+
                 LoadData();
                 return View(movie);
             }
 
-            movie.MainImg = ImageHelper.Save(ImageFile!, "wwwroot", Folder);
+            movie.MainImg = SaveImage(ImageFile!);
 
             context.Movies.Add(movie);
             context.SaveChanges();
 
             if (SubImages != null)
             {
-                foreach (var image in SubImages.Where(x => x != null && x.Length > 0))
+                foreach (var image in SubImages.Where(
+                    x => x != null && x.Length > 0))
                 {
-                    var fileName = ImageHelper.Save(image, "wwwroot", Folder);
+                    string fileName = SaveImage(image);
 
-                    context.MovieSubImages.Add(new MovieSubImage
-                    {
-                        Img = fileName,
-                        MovieId = movie.Id
-                    });
+                    context.MovieSubImages.Add(
+                        new MovieSubImage
+                        {
+                            Img = fileName,
+                            MovieId = movie.Id
+                        }
+                    );
                 }
             }
 
             if (ActorIds != null)
             {
-                foreach (var actorId in ActorIds.Distinct())
+                foreach (int actorId in ActorIds.Distinct())
                 {
                     if (context.Actors.Any(a => a.Id == actorId))
                     {
-                        context.MovieActors.Add(new MovieActor
-                        {
-                            MovieId = movie.Id,
-                            ActorId = actorId
-                        });
+                        context.MovieActors.Add(
+                            new MovieActor
+                            {
+                                MovieId = movie.Id,
+                                ActorId = actorId
+                            }
+                        );
                     }
                 }
             }
 
             context.SaveChanges();
 
-            TempData["Success"] = $"Movie \"{movie.Name}\" was created.";
+            TempData["Success"] =
+                $"Movie \"{movie.Name}\" was created.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -116,10 +152,12 @@ namespace Cinema.Areas.Admin.Controllers
                 return NotFound();
 
             LoadData();
+
             return View(movie);
         }
 
         [HttpPost]
+        
         public IActionResult Edit(
             Movie input,
             IFormFile? ImageFile,
@@ -134,19 +172,22 @@ namespace Cinema.Areas.Admin.Controllers
             if (movie == null)
                 return NotFound();
 
-            if (ImageFile is { Length: > 0 } &&
-                !ImageHelper.IsValid(ImageFile, out var error))
+            if (ImageFile != null && ImageFile.Length > 0)
             {
-                ModelState.AddModelError("ImageFile", error);
+                if (!IsValidImage(ImageFile, out string error))
+                {
+                    ModelState.AddModelError("ImageFile", error);
+                }
             }
 
             if (SubImages != null)
             {
-                foreach (var image in SubImages.Where(x => x != null && x.Length > 0))
+                foreach (var image in SubImages.Where(
+                    x => x != null && x.Length > 0))
                 {
-                    if (!ImageHelper.IsValid(image, out var subError))
+                    if (!IsValidImage(image, out string error))
                     {
-                        ModelState.AddModelError("SubImages", subError);
+                        ModelState.AddModelError("SubImages", error);
                     }
                 }
             }
@@ -165,13 +206,12 @@ namespace Cinema.Areas.Admin.Controllers
             movie.CategoryId = input.CategoryId;
             movie.CinemaId = input.CinemaId;
 
-            if (ImageFile is { Length: > 0 })
+            if (ImageFile != null && ImageFile.Length > 0)
             {
-                var oldImage = movie.MainImg;
+                string oldImage = movie.MainImg;
+                movie.MainImg = SaveImage(ImageFile);
 
-                movie.MainImg = ImageHelper.Save(ImageFile, "wwwroot", Folder);
-
-                ImageHelper.Delete("wwwroot", Folder, oldImage);
+                DeleteImage(oldImage);
             }
 
             if (SubImages != null &&
@@ -179,20 +219,23 @@ namespace Cinema.Areas.Admin.Controllers
             {
                 foreach (var oldSubImage in movie.SubImage.ToList())
                 {
-                    ImageHelper.Delete("wwwroot", Folder, oldSubImage.Img);
+                    DeleteImage(oldSubImage.Img);
                 }
 
                 context.MovieSubImages.RemoveRange(movie.SubImage);
 
-                foreach (var image in SubImages.Where(x => x != null && x.Length > 0))
+                foreach (var image in SubImages.Where(
+                    x => x != null && x.Length > 0))
                 {
-                    var fileName = ImageHelper.Save(image, "wwwroot", Folder);
+                    string fileName = SaveImage(image);
 
-                    context.MovieSubImages.Add(new MovieSubImage
-                    {
-                        Img = fileName,
-                        MovieId = movie.Id
-                    });
+                    context.MovieSubImages.Add(
+                        new MovieSubImage
+                        {
+                            Img = fileName,
+                            MovieId = movie.Id
+                        }
+                    );
                 }
             }
 
@@ -200,27 +243,31 @@ namespace Cinema.Areas.Admin.Controllers
 
             if (ActorIds != null)
             {
-                foreach (var actorId in ActorIds.Distinct())
+                foreach (int actorId in ActorIds.Distinct())
                 {
                     if (context.Actors.Any(a => a.Id == actorId))
                     {
-                        context.MovieActors.Add(new MovieActor
-                        {
-                            MovieId = movie.Id,
-                            ActorId = actorId
-                        });
+                        context.MovieActors.Add(
+                            new MovieActor
+                            {
+                                MovieId = movie.Id,
+                                ActorId = actorId
+                            }
+                        );
                     }
                 }
             }
 
             context.SaveChanges();
 
-            TempData["Success"] = $"Movie \"{movie.Name}\" was updated.";
+            TempData["Success"] =
+                $"Movie \"{movie.Name}\" was updated.";
 
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
+        
         public IActionResult Delete(int id)
         {
             var movie = context.Movies
@@ -231,13 +278,13 @@ namespace Cinema.Areas.Admin.Controllers
             if (movie == null)
                 return NotFound();
 
-            var movieName = movie.Name;
+            string movieName = movie.Name;
 
-            ImageHelper.Delete("wwwroot", Folder, movie.MainImg);
+            DeleteImage(movie.MainImg);
 
             foreach (var image in movie.SubImage)
             {
-                ImageHelper.Delete("wwwroot", Folder, image.Img);
+                DeleteImage(image.Img);
             }
 
             context.MovieActors.RemoveRange(movie.MovieActors);
@@ -246,9 +293,85 @@ namespace Cinema.Areas.Admin.Controllers
 
             context.SaveChanges();
 
-            TempData["Success"] = $"Movie \"{movieName}\" was deleted.";
+            TempData["Success"] =
+                $"Movie \"{movieName}\" was deleted.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool IsValidImage(
+            IFormFile file,
+            out string error)
+        {
+            string extension = Path.GetExtension(file.FileName)
+                .ToLowerInvariant();
+
+            if (!AllowedExtensions.Contains(extension))
+            {
+                error = "Only JPG, JPEG, PNG and WEBP images are allowed.";
+                return false;
+            }
+
+            if (file.Length > MaxImageSize)
+            {
+                error = "Image size must not exceed 5 MB.";
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        private string SaveImage(IFormFile file)
+        {
+            string uploadsFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                Folder
+            );
+
+            Directory.CreateDirectory(uploadsFolder);
+
+            string extension = Path.GetExtension(file.FileName)
+                .ToLowerInvariant();
+
+            string fileName = $"{Guid.NewGuid()}{extension}";
+
+            string filePath = Path.Combine(
+                uploadsFolder,
+                fileName
+            );
+
+            using var stream = new FileStream(
+                filePath,
+                FileMode.Create
+            );
+
+            file.CopyTo(stream);
+
+            return fileName;
+        }
+
+        private void DeleteImage(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return;
+
+            // Only allow deleting files inside the movies folder.
+            if (Path.GetFileName(fileName) != fileName)
+                return;
+
+            string filePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                Folder,
+                fileName
+            );
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
         }
 
         private void LoadData()
@@ -257,8 +380,7 @@ namespace Cinema.Areas.Admin.Controllers
                 .OrderBy(c => c.Name)
                 .ToList();
 
-            ViewBag.Cinemas = context.Cinemas
-                .ToList();
+            ViewBag.Cinemas = context.Cinemas.ToList();
 
             ViewBag.Actors = context.Actors
                 .OrderBy(a => a.Name)

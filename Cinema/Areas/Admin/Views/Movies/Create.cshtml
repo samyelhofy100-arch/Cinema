@@ -1,5 +1,5 @@
-﻿
-@model Cinema.Models.Movie
+﻿@model Cinema.Models.Movie
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Create Movie";
@@ -29,8 +29,10 @@
                   method="post"
                   enctype="multipart/form-data">
 
-                <div asp-validation-summary="ModelOnly"
-                     class="alert alert-danger"></div>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="All"
+                     class="text-danger mb-3"></div>
 
                 <div class="row">
 
@@ -146,7 +148,7 @@
                                id="ImageFile"
                                name="ImageFile"
                                class="form-control"
-                               accept="image/*"
+                               accept=".jpg,.jpeg,.png,.webp"
                                required />
 
                         <span class="text-danger">
@@ -154,7 +156,6 @@
                         </span>
 
                         <img id="mainPreview"
-                             src="#"
                              alt="Main image preview"
                              class="mt-3 rounded"
                              style="display:none; width:130px; height:170px; object-fit:cover;" />
@@ -169,12 +170,16 @@
                                id="SubImages"
                                name="SubImages"
                                class="form-control"
-                               accept="image/*"
+                               accept=".jpg,.jpeg,.png,.webp"
                                multiple />
 
                         <div id="subPreview"
                              class="d-flex flex-wrap gap-2 mt-3">
                         </div>
+
+                        <span class="text-danger">
+                            @Html.ValidationMessage("SubImages")
+                        </span>
                     </div>
 
                     <div class="col-12 mb-4">
@@ -213,12 +218,14 @@
                         Cancel
                     </a>
 
-                    <button type="submit" class="btn btn-warning fw-semibold">
+                    <button type="submit"
+                            class="btn btn-warning fw-semibold">
                         Create Movie
                     </button>
                 </div>
 
             </form>
+
         </div>
     </div>
 </div>
@@ -234,6 +241,7 @@
                 preview.src = URL.createObjectURL(this.files[0]);
                 preview.style.display = "block";
             } else {
+                preview.removeAttribute("src");
                 preview.style.display = "none";
             }
         });
@@ -244,8 +252,9 @@
 
             Array.from(this.files).forEach(file => {
                 const img = document.createElement("img");
+
                 img.src = URL.createObjectURL(file);
-                img.alt = "Sub image preview";
+                img.alt = "Additional image preview";
                 img.style.width = "90px";
                 img.style.height = "110px";
                 img.style.objectFit = "cover";

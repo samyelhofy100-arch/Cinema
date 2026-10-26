@@ -8,5 +8,9 @@
         public int ActorId { get; set; }
         public Actor Actor { get; set; } = null!;
 
+        public ICollection<MovieActor> MovieActors { get; set; }
+            = new List<MovieActor>();
+
+
     }
 }

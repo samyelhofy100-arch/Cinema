@@ -6,10 +6,10 @@ namespace Cinema.Areas.Client.Controllers
         private readonly ApplicationDbContext context = new ApplicationDbContext();
         int PageSize = 8;
 
-        public IActionResult Index(string? search, int? categoryId, int? cinemaId, int? actorId ,int page=1)
+        public IActionResult Index(string? search, int? categoryId, int? cinemaId, int? actorId, int page = 1)
         {
-            var movies = context.Movies
-                .Include(m => m.Category).Include(m => m.Cinema).AsQueryable();
+            var movies = context.Movies.Include(m => m.Category).Include(m => m.Cinema) .Include(m => m.SubImage)
+                        .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
                 movies = movies.Where(m => m.Name.Contains(search));

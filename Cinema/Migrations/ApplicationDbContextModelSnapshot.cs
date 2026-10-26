@@ -107,7 +107,6 @@ namespace Cinema.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MainImg")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -137,9 +136,17 @@ namespace Cinema.Migrations
                     b.Property<int>("ActorId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MovieActorActorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MovieActorMovieId")
+                        .HasColumnType("int");
+
                     b.HasKey("MovieId", "ActorId");
 
                     b.HasIndex("ActorId");
+
+                    b.HasIndex("MovieActorMovieId", "MovieActorActorId");
 
                     b.ToTable("MovieActors");
                 });
@@ -199,6 +206,10 @@ namespace Cinema.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Cinema.Models.MovieActor", null)
+                        .WithMany("MovieActors")
+                        .HasForeignKey("MovieActorMovieId", "MovieActorActorId");
+
                     b.Navigation("Actor");
 
                     b.Navigation("Movie");
@@ -235,6 +246,11 @@ namespace Cinema.Migrations
                     b.Navigation("MovieActors");
 
                     b.Navigation("SubImage");
+                });
+
+            modelBuilder.Entity("Cinema.Models.MovieActor", b =>
+                {
+                    b.Navigation("MovieActors");
                 });
 #pragma warning restore 612, 618
         }
