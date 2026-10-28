@@ -1,4 +1,6 @@
 using Cinema.Data;
+using Cinema.Models;
+using Cinema.Repository;
 using Microsoft.EntityFrameworkCore;
 namespace Cinema
 {
@@ -8,8 +10,24 @@ namespace Cinema
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var connectionString =
+                builder.Configuration.GetConnectionString("DefaultConnection")
+                    ?? throw new InvalidOperationException("Connection string"
+                    + "'DefaultConnection' not found.");
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(connectionString);
+            });
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddScoped<IRepository<Actor>, Repository<Actor>>();
+            builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
+            builder.Services.AddScoped<IRepository<Cinemas>, Repository<Cinemas>>();
+            builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
+            builder.Services.AddScoped<IMovieActorRepository, MovieActorRepository>();
+            builder.Services.AddScoped<IMovieSubImageRepository, MovieSubImageRepository>();
 
             var app = builder.Build();
 

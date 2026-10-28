@@ -2,6 +2,10 @@
 {
     public class ApplicationDbContext : DbContext
     {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+       : base(options)
+        {
+        }
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Cinemas> Cinemas => Set<Cinemas>();
         public DbSet<Actor> Actors => Set<Actor>();
@@ -13,8 +17,8 @@
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseSqlServer(
-                "Data Source=.;Initial Catalog=Cinema;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=True");
+            optionsBuilder.UseSqlServer();
+               
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

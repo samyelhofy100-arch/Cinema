@@ -1,0 +1,96 @@
+﻿@model Movie
+
+@{
+    ViewData["Title"] = "Movie Details";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">@Model.Name</h2>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <img src="~/Images/MoiveImg/@Model.MainImg"
+                 alt="@Model.Name"
+                 class="img-fluid rounded shadow-sm w-100" />
+        </div>
+
+        <div class="col-md-8">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th style="width: 30%">Name</th>
+                        <td>@Model.Name</td>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td>@Model.Description</td>
+                    </tr>
+                    <tr>
+                        <th>Price</th>
+                        <td>@Model.Price.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>@Model.Status</td>
+                    </tr>
+                    <tr>
+                        <th>Date</th>
+                        <td>@Model.DateTime?.ToString("yyyy-MM-dd HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Category</th>
+                        <td>@Model.Category?.Name</td>
+                    </tr>
+                    <tr>
+                        <th>Cinema</th>
+                        <td>@Model.Cinema?.Name</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4>Actors</h4>
+        @if (Model.MovieActors != null && Model.MovieActors.Any())
+        {
+            <ul class="list-group">
+                @foreach (var ma in Model.MovieActors)
+                {
+                    <li class="list-group-item">@ma.Actor?.Name</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">No actors assigned.</p>
+        }
+    </div>
+
+    <div class="mt-4">
+        <h4>Gallery</h4>
+        @if (Model.SubImage != null && Model.SubImage.Any())
+        {
+            <div class="row g-3">
+                @foreach (var img in Model.SubImage)
+                {
+                    <div class="col-6 col-md-3">
+                        <img src="~/Images/MoiveImg/@img.Img"
+                             class="img-fluid rounded shadow-sm"
+                             alt="Sub image" />
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">No additional images.</p>
+        }
+    </div>
+</div>

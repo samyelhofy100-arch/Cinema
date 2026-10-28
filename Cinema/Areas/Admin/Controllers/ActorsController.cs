@@ -1,6 +1,7 @@
 ﻿
 using Cinema.Data;
 using Cinema.Models;
+using Cinema.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,19 +11,26 @@ namespace Cinema.Areas.Admin.Controllers
     [Area("Admin")]
     public class ActorsController : Controller
     {
-        private readonly ApplicationDbContext context =
-            new ApplicationDbContext();
+       // private readonly ApplicationDbContext context =
+           // new ApplicationDbContext();
 
+        private readonly IRepository<Actor> _actorRepository;
+        private readonly IMovieActorRepository _movieActorRepository;
         private readonly string Folder =
             Path.Combine("wwwroot", "Images", "ActorImg");
 
+        public ActorsController(IRepository<Actor> actorRepository, IMovieActorRepository movieActorRepository)
+        {
+            _actorRepository = actorRepository;
+            _movieActorRepository = movieActorRepository;
+        }
 
-        public IActionResult Index(string? search, int page = 1)
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
             int pageSize = 5;
 
-            var actors = context.Actors.AsQueryable();
-
+            // var actors = context.Actors.AsQueryable();
+            var actors = await _actorRepository.GetAllAsync(includes: [a => a.MovieActors]);
             if (!string.IsNullOrWhiteSpace(search))
             {
                 actors = actors.Where(a => a.Name.Contains(search));
@@ -63,7 +71,7 @@ namespace Cinema.Areas.Admin.Controllers
 
         [HttpPost]
         
-        public IActionResult Create(Actor actor, IFormFile? imgFile)
+        public async Task<IActionResult> Create(Actor actor, IFormFile? imgFile)
         {
             if (imgFile != null && imgFile.Length > 0)
             {
@@ -87,20 +95,33 @@ namespace Cinema.Areas.Admin.Controllers
                 actor.Img = SaveImage(imgFile);
             }
 
-            context.Actors.Add(actor);
-            context.SaveChanges();
-
+           // context.Actors.Add(actor);
+          await _actorRepository.AddAsync(actor);
+          //  context.SaveChanges();
+          await _actorRepository.CommitAsync();
             TempData["Success"] =
                 $"Actor \"{actor.Name}\" was created.";
 
             return RedirectToAction(nameof(Index));
         }
-
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var actor = context.Actors.Find(id);
+            var actor = await _actorRepository.GetOneAsync(
+                a => a.Id == id,
+                includeProperties: ["MovieActors.Movie"],
+                isTracked: false);
 
+            if (actor == null)
+                return NotFound();
+
+            return View(actor);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+           // var actor = context.Actors.Find(id);
+           var actor =await _actorRepository.FindAsync(id);
             if (actor == null)
             {
                 return NotFound();
@@ -111,10 +132,10 @@ namespace Cinema.Areas.Admin.Controllers
 
         [HttpPost]
         
-        public IActionResult Edit(Actor input, IFormFile? imgFile)
+        public async Task<IActionResult> Edit(Actor input, IFormFile? imgFile)
         {
-            var actor = context.Actors.Find(input.Id);
-
+           // var actor = context.Actors.Find(input.Id);
+           var actor =await _actorRepository.FindAsync(input.Id);   
             if (actor == null)
             {
                 return NotFound();
@@ -143,12 +164,13 @@ namespace Cinema.Areas.Admin.Controllers
                 var oldImage = actor.Img;
                 actor.Img = SaveImage(imgFile);
 
-                context.SaveChanges();
-
+              //  context.SaveChanges();
+             await _actorRepository.CommitAsync();
                 DeleteImage(oldImage);
             }
 
-            context.SaveChanges();
+            // context.SaveChanges();
+            await _actorRepository.CommitAsync();
 
             TempData["Success"] =
                 $"Actor \"{actor.Name}\" was updated.";
@@ -158,12 +180,13 @@ namespace Cinema.Areas.Admin.Controllers
 
         [HttpPost]
         
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var actor = context.Actors
-                .Include(a => a.MovieActors)
-                .FirstOrDefault(a => a.Id == id);
+            //var actor = context.Actors
+            //    .Include(a => a.MovieActors)
+            //    .FirstOrDefault(a => a.Id == id);
 
+            var actor =await _actorRepository.GetOneAsync(a => a.Id == id,includes: [a => a.MovieActors]);
             if (actor == null)
             {
                 return NotFound();
@@ -171,10 +194,15 @@ namespace Cinema.Areas.Admin.Controllers
 
             var actorName = actor.Name;
             var oldImage = actor.Img;
+            //********
+            // context.MovieActors.RemoveRange(actor.MovieActors);
 
-            context.MovieActors.RemoveRange(actor.MovieActors);
-            context.Actors.Remove(actor);
-            context.SaveChanges();
+            _movieActorRepository.RemoveRange(actor.MovieActors);
+            //_actorRepository.Remove(actor);
+            _actorRepository.Remove(actor);
+
+           // context.SaveChanges();
+           await _actorRepository.CommitAsync();
 
             DeleteImage(oldImage);
 
