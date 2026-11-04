@@ -1,0 +1,82 @@
+﻿
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cinema</title>
+    <link rel="stylesheet" href="~/css/account.css">
+</head>
+<body>
+
+<div class="account-page">
+    <div class="account-card">
+
+        <div class="brand">
+            <div class="brand-icon">🎬</div>
+            <h2>Cinema</h2>
+            <p>Your movie experience starts here</p>
+        </div>
+
+        <h1 class="account-title">Welcome Back!</h1>
+        <p class="account-subtitle">Sign in to continue watching movies.</p>
+
+        <div id="formMessage" class="form-message"></div>
+
+        <form onsubmit="return validateForm(event)">
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" class="form-control"
+                       id="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" class="form-control"
+                           id="password" placeholder="Enter your password" required>
+                    <span class="toggle-password"
+                          onclick="togglePassword('password')">👁</span>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember">
+                    <input type="checkbox" id="remember">
+                    Remember Me
+                </label>
+
+                <a href="/Identity/Account/ForgotPassword" class="account-link">
+                    Forgot Password?
+                </a>
+            </div>
+
+            <button type="submit" class="account-btn">Login</button>
+
+        </form>
+
+        <div class="account-footer">
+            Don't have an account?
+            <a href="/Identity/Account/Register" class="account-link">
+                Create Account
+            </a>
+            <br>
+            Didn't receive confirmation email?
+            <a href="/Identity/Account/ResendEmailConfirmation"
+               class="account-link">Resend Email</a>
+        </div>
+
+        <a href="/Client" class="back-home">← Back to Home</a>
+
+    </div>
+</div>
+
+<script src="~/js/account.js"></script>
+</body>
+</html>

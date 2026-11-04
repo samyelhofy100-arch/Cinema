@@ -1,7 +1,12 @@
 using Cinema.Data;
 using Cinema.Models;
 using Cinema.Repository;
+using Ecommerce535.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Cinema.Utilities;
+
 namespace Cinema
 {
     public class Program
@@ -12,42 +17,64 @@ namespace Cinema
 
             var connectionString =
                 builder.Configuration.GetConnectionString("DefaultConnection")
-                    ?? throw new InvalidOperationException("Connection string"
-                    + "'DefaultConnection' not found.");
+                ?? throw new InvalidOperationException(
+                    "Connection string 'DefaultConnection' not found.");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
             });
-            // Add services to the container.
+
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 6;
+
+                options.User.RequireUniqueEmail = true;
+
+                options.SignIn.RequireConfirmedEmail = true;
+            })
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                   .AddDefaultTokenProviders();
+
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddScoped<IRepository<Actor>, Repository<Actor>>();
             builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
             builder.Services.AddScoped<IRepository<Cinemas>, Repository<Cinemas>>();
             builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
+            builder.Services.AddScoped<IRepository<ApplicationUserOtp>, Repository<ApplicationUserOtp>>();
+
             builder.Services.AddScoped<IMovieActorRepository, MovieActorRepository>();
             builder.Services.AddScoped<IMovieSubImageRepository, MovieSubImageRepository>();
 
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{area=Admin}/{controller=Home}/{action=Index}/{id?}").WithStaticAssets();
+                pattern: "{area=Identity}/{controller=Account}/{action=Register}/{id?}");
+
+            app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }

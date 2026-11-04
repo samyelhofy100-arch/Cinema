@@ -4,4 +4,6 @@ global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.EntityFrameworkCore;
 global using System.Diagnostics;
 global using System.ComponentModel.DataAnnotations;
- 
+global using Ecommerce535.Models;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore;

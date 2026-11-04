@@ -1,0 +1,149 @@
+﻿
+@model Cinema.ModelView.RegisterVM
+
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Cinema</title>
+    <link rel="stylesheet" href="~/css/account.css">
+</head>
+<body>
+
+    <div class="account-page">
+        <div class="account-card">
+
+            <div class="brand">
+                <div class="brand-icon">🎬</div>
+                <h2>Cinema</h2>
+                <p>Join our movie community</p>
+            </div>
+
+            <h1 class="account-title">Create Account</h1>
+            <p class="account-subtitle">Create your account and enjoy the experience.</p>
+
+            <div asp-validation-summary="All" class="form-message"></div>
+
+            <form asp-area="Identity"
+                  asp-controller="Account"
+                  asp-action="Register"
+                  method="post"
+                  onsubmit="return validateForm(event)">
+
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label asp-for="Name">Full Name</label>
+                    <input asp-for="Name"
+                           class="form-control"
+                           placeholder="Enter your full name" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="UserName">Username</label>
+                    <input asp-for="UserName"
+                           class="form-control"
+                           placeholder="Enter your username" />
+                    <span asp-validation-for="UserName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Address">Address</label>
+                    <input asp-for="Address"
+                           class="form-control"
+                           placeholder="Enter your address" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email">Email Address</label>
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="Enter your email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password">Password</label>
+
+                    <div class="password-wrapper">
+                        <input asp-for="Password"
+                               type="password"
+                               class="form-control"
+                               id="password"
+                               placeholder="Create password" />
+
+                        <span class="toggle-password"
+                              onclick="togglePassword('password')">👁</span>
+                    </div>
+
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm Password</label>
+
+                    <div class="password-wrapper">
+                        <input type="password"
+                               id="confirmPassword"
+                               class="form-control"
+                               placeholder="Confirm your password" />
+                        <span class="toggle-password"
+                              onclick="togglePassword('confirmPassword')">👁</span>
+                    </div>
+
+                    <span id="confirmPasswordError" class="text-danger"></span>
+                </div>
+
+              <button type="submit" class="account-btn">
+                    Create Account
+              </button>
+
+            </form>
+
+            <div class="account-footer">
+                Already have an account?
+                <a asp-area="Identity"
+                   asp-controller="Account"
+                   asp-action="Login"
+                   class="account-link">Login</a>
+            </div>
+
+            <a asp-area="Client"
+               asp-controller="Home"
+               asp-action="Index"
+               class="back-home">← Back to Home</a>
+
+        </div>
+    </div>
+
+    <script src="~/js/account.js"></script>
+
+    <script>
+        function validateForm(event) {
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            const error = document.getElementById("confirmPasswordError");
+
+            error.textContent = "";
+
+            if (password !== confirmPassword) {
+                event.preventDefault();
+                error.textContent = "Passwords do not match.";
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+
+</body>
+</html>

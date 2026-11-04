@@ -1,6 +1,9 @@
-﻿namespace Cinema.Data
+﻿using Ecommerce535.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+namespace Cinema.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
        : base(options)
@@ -12,14 +15,7 @@
         public DbSet<Movie> Movies => Set<Movie>();
         public DbSet<MovieSubImage> MovieSubImages => Set<MovieSubImage>();
         public DbSet<MovieActor> MovieActors => Set<MovieActor>();
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            base.OnConfiguring(optionsBuilder);
-
-            optionsBuilder.UseSqlServer();
-               
-        }
+        public DbSet<ApplicationUserOtp> ApplicationUserOtps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
