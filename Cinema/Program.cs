@@ -1,7 +1,6 @@
 using Cinema.Data;
 using Cinema.Models;
 using Cinema.Repository;
-using Ecommerce535.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -27,11 +26,6 @@ namespace Cinema
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequiredLength = 6;
-
                 options.User.RequireUniqueEmail = true;
 
                 options.SignIn.RequireConfirmedEmail = true;
@@ -72,9 +66,7 @@ namespace Cinema
                 name: "default",
                 pattern: "{area=Identity}/{controller=Account}/{action=Register}/{id?}");
 
-            app.MapControllerRoute(
-                name: "areas",
-                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+           
 
             app.Run();
         }

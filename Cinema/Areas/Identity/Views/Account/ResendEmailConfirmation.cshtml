@@ -1,6 +1,7 @@
-﻿
+@model Cinema.ModelView.ResendEmailConfirmationVM
+
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Resend Email Confirmation";
     Layout = null;
 }
 
@@ -9,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Cinema</title>
+    <title>Resend Confirmation - Cinema</title>
     <link rel="stylesheet" href="~/css/account.css">
 </head>
 <body>
@@ -20,66 +21,48 @@
         <div class="brand">
             <div class="brand-icon">🎬</div>
             <h2>Cinema</h2>
-            <p>Join our movie community</p>
+            <p>Let's get you verified</p>
         </div>
 
-        <h1 class="account-title">Create Account</h1>
-        <p class="account-subtitle">Create your account and enjoy the experience.</p>
+        <h1 class="account-title">Resend Confirmation</h1>
+        <p class="account-subtitle">
+            Enter your email or username and we'll send you a new confirmation link.
+        </p>
 
-        <div id="formMessage" class="form-message"></div>
+        <div asp-validation-summary="ModelOnly" class="form-message"></div>
 
-        <form onsubmit="return validateForm(event)">
+        <form asp-area="Identity"
+              asp-controller="Account"
+              asp-action="ResendEmailConfirmation"
+              method="post">
 
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" class="form-control"
-                       id="name" placeholder="Enter your full name" required>
-            </div>
-
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" class="form-control"
-                       id="email" placeholder="Enter your email" required>
-            </div>
+            @Html.AntiForgeryToken()
 
             <div class="form-group">
-                <label>Password</label>
-                <div class="password-wrapper">
-                    <input type="password" class="form-control"
-                           id="password" placeholder="Create password"
-                           minlength="6" required>
-                    <span class="toggle-password"
-                          onclick="togglePassword('password')">👁</span>
-                </div>
+                <label asp-for="UserNameOrEmail">Email or Username</label>
+                <input asp-for="UserNameOrEmail" class="form-control"
+                       placeholder="Enter your email or username" />
+                <span asp-validation-for="UserNameOrEmail" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <div class="password-wrapper">
-                    <input type="password" class="form-control"
-                           id="confirmPassword"
-                           placeholder="Confirm your password" required>
-                    <span class="toggle-password"
-                          onclick="togglePassword('confirmPassword')">👁</span>
-                </div>
-            </div>
-
-            <button type="submit" class="account-btn">
-                Create Account
-            </button>
+            <button type="submit" class="account-btn">Send Confirmation Email</button>
 
         </form>
 
         <div class="account-footer">
-            Already have an account?
-            <a href="/Client/Account/Login" class="account-link">Login</a>
+            Already confirmed?
+            <a asp-area="Identity" asp-controller="Account" asp-action="Login" class="account-link">Login</a>
         </div>
 
-        <a href="/Client" class="back-home">← Back to Home</a>
+        <a asp-area="Client" asp-controller="Home" asp-action="Index" class="back-home">← Back to Home</a>
 
     </div>
 </div>
 
 <script src="~/js/account.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
 </body>
 </html>

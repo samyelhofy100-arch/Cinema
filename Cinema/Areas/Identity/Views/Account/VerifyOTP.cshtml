@@ -1,0 +1,75 @@
+@model Cinema.ModelView.VerifyOTPVM
+
+@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Cinema</title>
+    <link rel="stylesheet" href="~/css/account.css">
+</head>
+<body>
+
+<div class="account-page">
+    <div class="account-card">
+
+        <div class="brand">
+            <div class="brand-icon">🎬</div>
+            <h2>Cinema</h2>
+            <p>One more step</p>
+        </div>
+
+        <h1 class="account-title">Verify Code</h1>
+        <p class="account-subtitle">
+            We sent a 4-digit code to your email. Enter it below.
+        </p>
+
+        @if (TempData["Successful_Notification"] != null)
+        {
+            <div class="form-message" style="color:#22c55e;">@TempData["Successful_Notification"]</div>
+        }
+
+        <div asp-validation-summary="ModelOnly" class="form-message"></div>
+
+        <form asp-area="Identity"
+              asp-controller="Account"
+              asp-action="VerifyOTP"
+              method="post">
+
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="UserId" />
+
+            <div class="form-group">
+                <label asp-for="OTP">OTP Code</label>
+                <input asp-for="OTP" class="form-control" maxlength="4"
+                       inputmode="numeric" autocomplete="one-time-code"
+                       placeholder="Enter the 4-digit code" />
+                <span asp-validation-for="OTP" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="account-btn">Verify</button>
+
+        </form>
+
+        <div class="account-footer">
+            Didn't get a code?
+            <a asp-area="Identity" asp-controller="Account" asp-action="ForgetPassword" class="account-link">Send again</a>
+        </div>
+
+        <a asp-area="Identity" asp-controller="Account" asp-action="Login" class="back-home">← Back to Login</a>
+
+    </div>
+</div>
+
+<script src="~/js/account.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+</body>
+</html>

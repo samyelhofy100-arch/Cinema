@@ -1,4 +1,4 @@
-﻿using Ecommerce535.Models;
+﻿using Cinema.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Cinema.Data

@@ -1,11 +1,7 @@
-﻿
-using Cinema.ModelView;
+﻿using Cinema.ModelView;
 using Cinema.Repository;
-using Cinema.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Cinema.Areas.Identity.Controllers
 {
     [Area("Identity")]
@@ -68,7 +64,7 @@ namespace Cinema.Areas.Identity.Controllers
             var link = Url.Action("ConfirmEmail", "Account", new { area = "Identity", id = user.Id, token }, Request.Scheme);
             await _emailSender.SendEmailAsync(
                 registerVM.Email,
-                "Ecommerce535 Confirmation Mail ",
+                "Cinema Confirmation Mail ",
                 $"<h1> please click <a href='{link}'> here</a> to confirm Your Mail</h1>"
                 );
             TempData["Successful_Notification"] = "Registration Successfully";
@@ -112,9 +108,7 @@ namespace Cinema.Areas.Identity.Controllers
         public async Task<IActionResult> Login(LoginVM loginVM)
         {
             if (!ModelState.IsValid)
-            {
                 return View(loginVM);
-            }
 
             var user = await _userManager.FindByEmailAsync(loginVM.UserNameOrEmail)
                 ?? await _userManager.FindByNameAsync(loginVM.UserNameOrEmail);
@@ -132,25 +126,17 @@ namespace Cinema.Areas.Identity.Controllers
                 true
             );
 
-            if (!result.Succeeded)
-            {
-                if (result.IsLockedOut)
-                {
-                    ModelState.AddModelError("", "Too many attempts. Please try again later.");
-                }
-                else if (result.IsNotAllowed)
-                {
-                    ModelState.AddModelError("", "Confirm your email first.");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Invalid username or email or password.");
-                }
+            if (result.Succeeded)
+                return RedirectToAction("Index", "Home", new { area = "Client" });
 
-                return View(loginVM);
-            }
+            if (result.IsNotAllowed)
+                ModelState.AddModelError("", "Please confirm your email first.");
+            else if (result.IsLockedOut)
+                ModelState.AddModelError("", "Your account is locked. Try again later.");
+            else
+                ModelState.AddModelError("", "Invalid username or password.");
 
-            return RedirectToAction("Index", "Home", new { area = "Client" });
+            return View(loginVM);
         }
 
         // Resend Email Confirmation
