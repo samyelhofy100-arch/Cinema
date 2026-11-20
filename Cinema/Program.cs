@@ -1,7 +1,4 @@
 
-using Cinema.Data;
-using Cinema.Models;
-using Cinema.Repository;
 using Cinema.Utilities;
 using Cinema.Helpers;
 
