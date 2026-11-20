@@ -1,19 +1,27 @@
+
 using Cinema.Data;
 using Cinema.Models;
 using Cinema.Repository;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Cinema.Utilities;
+using Cinema.Helpers;
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Stripe
+            Stripe.StripeConfiguration.ApiKey =
+                builder.Configuration["Stripe:SecretKey"];
+
+            // Database Connection
             var connectionString =
                 builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(
@@ -24,30 +32,64 @@ namespace Cinema
                 options.UseSqlServer(connectionString);
             });
 
+            // Identity
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
 
                 options.SignIn.RequireConfirmedEmail = true;
-            })
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                   .AddDefaultTokenProviders();
 
+                options.Password.RequiredLength = 6;
+
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan =
+                    TimeSpan.FromMinutes(10);
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+            // Authentication Cookie
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Client/Account/Login";
+                options.AccessDeniedPath = "/Client/Account/AccessDenied";
+            });
+
+            // Security Stamp
+            builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+            {
+                options.ValidationInterval = TimeSpan.Zero;
+            });
+
+            // MVC
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddScoped<IRepository<Actor>, Repository<Actor>>();
-            builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
-            builder.Services.AddScoped<IRepository<Cinemas>, Repository<Cinemas>>();
-            builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
-            builder.Services.AddScoped<IRepository<ApplicationUserOtp>, Repository<ApplicationUserOtp>>();
+            // Repositories
+            builder.Services.AddScoped(
+                typeof(IRepository<>),
+                typeof(Repository<>));
 
             builder.Services.AddScoped<IMovieActorRepository, MovieActorRepository>();
             builder.Services.AddScoped<IMovieSubImageRepository, MovieSubImageRepository>();
 
+            // Email
             builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+            // Database Initializer
+            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
             var app = builder.Build();
 
+            // Database Seeding
+            using (var scope = app.Services.CreateScope())
+            {
+                var initializer =
+                    scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+
+                await initializer.InitializeAsync();
+            }
+
+            // Middleware
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -55,20 +97,21 @@ namespace Cinema
             }
 
             app.UseHttpsRedirection();
+
             app.UseStaticFiles();
 
             app.UseRouting();
 
             app.UseAuthentication();
+
             app.UseAuthorization();
 
+            // Default Route
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{area=Identity}/{controller=Account}/{action=Register}/{id?}");
 
-           
-
-            app.Run();
+            await app.RunAsync();
         }
     }
 }

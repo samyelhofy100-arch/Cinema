@@ -1,5 +1,6 @@
 ﻿using Cinema.ModelView;
 using Cinema.Repository;
+using Cinema.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 namespace Cinema.Areas.Identity.Controllers
@@ -42,7 +43,7 @@ namespace Cinema.Areas.Identity.Controllers
 
             ApplicationUser user = new ApplicationUser()
             {
-                Name = registerVM.Name,
+                Name = registerVM.FullName,
                 Address = registerVM.Address,
                 UserName = registerVM.UserName,
                 Email = registerVM.Email

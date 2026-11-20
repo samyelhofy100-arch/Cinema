@@ -5,4 +5,7 @@ global using Microsoft.EntityFrameworkCore;
 global using System.Diagnostics;
 global using System.ComponentModel.DataAnnotations;
 global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-global using Microsoft.EntityFrameworkCore;
+global using Microsoft.AspNetCore.Identity;
+global using Cinema.Helpers;
+global using Cinema.Repository;
+global using Microsoft.AspNetCore.Authorization;

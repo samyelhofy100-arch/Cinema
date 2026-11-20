@@ -1,43 +1,47 @@
 ﻿
 using Cinema.Data;
+using Cinema.Helpers;
 using Cinema.Models;
 using Cinema.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.AdminRoles)]
     public class CinemasController : Controller
     {
-        //private readonly ApplicationDbContext _context =
-        //    new ApplicationDbContext();
-
         private readonly IRepository<Cinemas> _cinemasRepository;
+        private readonly IRepository<Hall> _hallsRepository;
+
         private readonly string Folder =
             Path.Combine("Images", "CinemaImg");
-        public CinemasController(IRepository<Cinemas> cinemasRepository)
+
+        public CinemasController(
+            IRepository<Cinemas> cinemasRepository,
+            IRepository<Hall> hallsRepository)
         {
             _cinemasRepository = cinemasRepository;
+            _hallsRepository = hallsRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            //var cinemas = _context.Cinemas
-            //    .Include(c => c.Movies)
-            //    .OrderBy(c => c.Name)
-            //    .ToList();
+            var cinemas = await _cinemasRepository.GetAllAsync(
+                includes: [c => c.Movies],
+                orderBy: p => p.OrderBy(c => c.Name));
 
-            var cinemas =await _cinemasRepository.GetAllAsync(includes: [c => c.Movies],orderBy: p => p.OrderBy(c => c.Name));
             return View(cinemas);
         }
 
         public async Task<IActionResult> Details(int id)
         {
-            //var cinema = _context.Cinemas
-            //    .Include(c => c.Movies)
-            //    .FirstOrDefault(c => c.Id == id);
-            var cinema =await _cinemasRepository.GetOneAsync(c => c.Id == id, includes: [c => c.Movies]);
+            var cinema = await _cinemasRepository.GetOneAsync(
+                c => c.Id == id,
+                includes: [c => c.Movies]);
+
             if (cinema == null)
                 return NotFound();
 
@@ -51,8 +55,9 @@ namespace Cinema.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        
-        public async Task<IActionResult> Create(Cinemas cinema, IFormFile? ImageFile)
+        public async Task<IActionResult> Create(
+            Cinemas cinema,
+            IFormFile? ImageFile)
         {
             if (ImageFile != null && ImageFile.Length > 0)
             {
@@ -85,10 +90,9 @@ namespace Cinema.Areas.Admin.Controllers
             if (!ModelState.IsValid)
                 return View(cinema);
 
-            //_context.Cinemas.Add(cinema);
-            //_context.SaveChanges();
-           await _cinemasRepository.AddAsync(cinema);
+            await _cinemasRepository.AddAsync(cinema);
             await _cinemasRepository.CommitAsync();
+
             TempData["Success"] =
                 $"Cinema \"{cinema.Name}\" was created successfully.";
 
@@ -98,8 +102,8 @@ namespace Cinema.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            //  var cinema = _context.Cinemas.Find(id);
-            var cinema =await _cinemasRepository.FindAsync(id);
+            var cinema = await _cinemasRepository.FindAsync(id);
+
             if (cinema == null)
                 return NotFound();
 
@@ -107,10 +111,12 @@ namespace Cinema.Areas.Admin.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Cinemas input, IFormFile? ImageFile)
+        public async Task<IActionResult> Edit(
+            Cinemas input,
+            IFormFile? ImageFile)
         {
-            // var cinema = _context.Cinemas.Find(input.Id);
-            var cinema =await _cinemasRepository.FindAsync(input.Id);
+            var cinema = await _cinemasRepository.FindAsync(input.Id);
+
             if (cinema == null)
                 return NotFound();
 
@@ -153,24 +159,25 @@ namespace Cinema.Areas.Admin.Controllers
             cinema.Name = input.Name;
             cinema.Description = input.Description;
 
-            // _context.SaveChanges();
-           await _cinemasRepository.CommitAsync();
+            await _cinemasRepository.CommitAsync();
+
             TempData["Success"] =
                 $"Cinema \"{cinema.Name}\" was updated successfully.";
 
             return RedirectToAction(nameof(Index));
         }
 
-       
+        [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-            //var cinema = _context.Cinemas
-            //    .Include(c => c.Movies)
-            //    .FirstOrDefault(c => c.Id == id);
-            var cinema = await _cinemasRepository.GetOneAsync(c => c.Id == id, includes: [c => c.Movies]);
+            var cinema = await _cinemasRepository.GetOneAsync(
+                c => c.Id == id,
+                includes: [c => c.Movies]);
+
             if (cinema == null)
                 return NotFound();
 
+            // Check if cinema has movies.
             if (cinema.Movies.Any())
             {
                 TempData["Error"] =
@@ -179,12 +186,24 @@ namespace Cinema.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Check if cinema has halls.
+            var hasHalls = await _hallsRepository
+                .GetOneAsync(h => h.CinemaId == id);
+
+            if (hasHalls != null)
+            {
+                TempData["Error"] =
+                    $"\"{cinema.Name}\" still has halls. Delete them first.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
             DeleteImage(cinema.Img);
 
-           _cinemasRepository.Remove(cinema);
-            // _context.Cinemas.Remove(cinema);
-            //_context.SaveChanges();
-           await _cinemasRepository.CommitAsync();
+            _cinemasRepository.Remove(cinema);
+
+            await _cinemasRepository.CommitAsync();
+
             TempData["Success"] =
                 $"Cinema \"{cinema.Name}\" was deleted successfully.";
 

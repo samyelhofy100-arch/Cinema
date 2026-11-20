@@ -1,0 +1,35 @@
+﻿@model Order
+
+@{
+    ViewData["Title"] = "Payment successful";
+}
+
+<div class="auth-wrap">
+    <div class="auth-card auth-card--full" style="max-width: 560px">
+        <div class="text-center">
+            <div style="font-size:3.2rem">🎉</div>
+            <h1 class="auth-title">Payment successful</h1>
+            <p class="auth-sub">Order #@Model.Id · @Model.OrderDate.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</p>
+        </div>
+
+        <ul class="list-unstyled mb-3">
+            @foreach (var i in Model.Items)
+            {
+                <li class="d-flex justify-content-between py-2 border-bottom border-secondary-subtle">
+                    <span>@i.Movie.Name <span class="text-secondary">× @i.Count</span></span>
+                    <strong>@((i.Price * i.Count).ToString("0.##")) EGP</strong>
+                </li>
+            }
+        </ul>
+
+        <div class="d-flex justify-content-between mb-4">
+            <span class="text-secondary">Total paid</span>
+            <span class="cart-summary__total">@Model.TotalPrice.ToString("0.##") EGP</span>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+            <a asp-action="Orders" class="btn btn-outline-light">My orders</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-warning fw-semibold">Back to movies</a>
+        </div>
+    </div>
+</div>

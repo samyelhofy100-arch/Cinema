@@ -1,0 +1,42 @@
+﻿@model List<Order>
+
+@{
+    ViewData["Title"] = "My orders";
+}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title">My orders</h1>
+        <p class="page-hero__sub">@Model.Count paid order(s)</p>
+    </div>
+</section>
+
+<div class="container pb-4" style="max-width: 900px">
+    @if (Model.Any())
+    {
+        @foreach (var o in Model)
+        {
+            <div class="cart-item flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="fw-bold">Order #@o.Id</div>
+                    <div class="cart-item__meta">
+                        @o.OrderDate.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") · @o.Items.Sum(i => i.Count) ticket(s)
+                    </div>
+                    <div class="cart-item__meta">
+                        @string.Join(", ", o.Items.Select(i => $"{i.Movie.Name} ×{i.Count}"))
+                    </div>
+                </div>
+                <span class="chip chip--on">Paid</span>
+                <div class="cart-item__total">@o.TotalPrice.ToString("0.##") EGP</div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div style="font-size:3.5rem">🎟</div>
+            <h4 class="mt-2">No orders yet</h4>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-warning fw-semibold mt-2">Browse movies</a>
+        </div>
+    }
+</div>

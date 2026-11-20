@@ -1,0 +1,36 @@
+﻿@model ShowtimeEditVM
+
+@{
+    ViewData["Title"] = "Edit showtime";
+}
+
+<form asp-action="Edit" method="post" novalidate>
+    <input type="hidden" asp-for="Id" />
+
+    <div class="adm-card adm-card--pad adm-form-narrow">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+        <p class="mb-3">
+            <strong>@Model.MovieName</strong><br />
+            <span class="text-secondary">@Model.HallName</span><br />
+            <span class="small text-secondary">The movie and hall can't be changed. Delete the showtime and add a new one instead.</span>
+        </p>
+
+        <div class="mb-3">
+            <label asp-for="StartTime" class="form-label"></label>
+            <input asp-for="StartTime" type="datetime-local" class="form-control" />
+            <span asp-validation-for="StartTime" class="adm-error"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" type="number" step="0.01" min="0" class="form-control" />
+            <span asp-validation-for="Price" class="adm-error"></span>
+        </div>
+
+        <div class="adm-actions adm-actions--inline">
+            <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+            <button type="submit" class="btn btn-warning fw-semibold px-4">Save changes</button>
+        </div>
+    </div>
+</form>

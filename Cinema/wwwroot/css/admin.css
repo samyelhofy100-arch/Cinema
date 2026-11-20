@@ -161,3 +161,11 @@ a.adm-stat:hover { transform: translateY(-3px); border-color: rgba(255, 193, 7, 
     .adm-content { padding: 18px; }
     .adm-topbar { padding: 14px 18px; }
 }
+/* ---------- Validation fixes ---------- */
+.validation-summary-valid {
+    display: none;
+}
+
+.alert ul {
+    margin-bottom: 0;
+}

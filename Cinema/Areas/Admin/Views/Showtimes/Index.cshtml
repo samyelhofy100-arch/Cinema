@@ -1,0 +1,69 @@
+﻿@model List<Showtime>
+
+@{
+    ViewData["Title"] = "Showtimes";
+    var movies = ViewBag.Movies as List<Movie> ?? new List<Movie>();
+    int? movieId = ViewBag.MovieId as int?;
+    DateTime? date = ViewBag.Date as DateTime?;
+    bool past = (bool)ViewBag.Past;
+}
+
+<div class="adm-card">
+    <div class="adm-card__head">
+        <form method="get" asp-action="Index" class="adm-search flex-wrap">
+            <select name="movieId" class="form-select" style="min-width:220px">
+                <option value="">All movies</option>
+                @foreach (var m in movies)
+                {
+                    <option value="@m.Id" selected="@(movieId == m.Id)">@m.Name</option>
+                }
+            </select>
+            <input type="date" name="date" value="@(date?.ToString("yyyy-MM-dd"))" class="form-control" style="max-width:170px" />
+            <div class="form-check form-switch ms-2">
+                <input class="form-check-input" type="checkbox" name="past" value="true" id="past" checked="@past" />
+                <label class="form-check-label" for="past">Past</label>
+            </div>
+            <button class="btn btn-outline-light">Filter</button>
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        </form>
+        <a asp-action="Create" class="btn btn-warning fw-semibold">+ Add showtimes</a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table adm-table align-middle mb-0">
+                <thead>
+                    <tr><th></th><th>Movie</th><th>Cinema / Hall</th><th>Date</th><th>Time</th><th>Price</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td style="width:64px"><img class="adm-thumb" src="~/Images/MoiveImg/@s.Movie.MainImg" alt="" /></td>
+                            <td class="fw-semibold">@s.Movie.Name</td>
+                            <td>@s.Hall.Cinema.Name <span class="text-secondary">/ @s.Hall.Name</span></td>
+                            <td>@s.StartTime.ToString("ddd dd MMM yyyy")</td>
+                            <td><span class="adm-pill">@s.StartTime.ToString("hh:mm tt")</span></td>
+                            <td>@s.Price.ToString("0.##") EGP</td>
+                            <td class="text-end text-nowrap">
+                                @if (!past)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-light">Edit</a>
+                                }
+                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline"
+                                      data-confirm="Delete this showtime (@s.Movie.Name, @s.StartTime.ToString("dd MMM hh:mm tt"))?">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="adm-empty">No showtimes found.</p>
+    }
+</div>

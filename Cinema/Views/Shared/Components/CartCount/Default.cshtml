@@ -1,0 +1,10 @@
+﻿@* Views/Shared/Components/CartCount/Default.cshtml *@
+@model int
+
+<a class="nav-link position-relative" asp-area="Client" asp-controller="Cart" asp-action="Index">
+    🛒 Cart
+    @if (Model > 0)
+    {
+        <span class="cart-badge">@Model</span>
+    }
+</a>

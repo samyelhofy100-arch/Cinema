@@ -1,13 +1,17 @@
-﻿namespace Cinema.ModelView
+﻿
+namespace Cinema.ViewModels
 {
     public class LoginVM
     {
-        public int Id { get; set; }
-        [Required]
-        public string UserNameOrEmail { get; set; }
-        [Required]
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
+        [Required, Display(Name = "Username or email")]
+        public string UserNameOrEmail { get; set; } = string.Empty;
+
+        [Required, DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        [Display(Name = "Remember me")]
         public bool RememberMe { get; set; }
+
+        public string? ReturnUrl { get; set; }
     }
 }

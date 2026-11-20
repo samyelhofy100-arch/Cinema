@@ -1,0 +1,72 @@
+﻿@model List<UserRowVM>
+
+@{
+    ViewData["Title"] = "Users";
+    string search = ViewBag.Search as string ?? "";
+}
+
+<div class="adm-card">
+    <div class="adm-card__head">
+        <form method="get" asp-action="Index" class="adm-search">
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Search users..." autocomplete="off" />
+            <button class="btn btn-outline-light">Search</button>
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <a asp-action="Index" class="btn btn-link">Clear</a>
+            }
+        </form>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table adm-table align-middle mb-0">
+                <thead>
+                    <tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        bool isSuper = u.Role == SD.SuperAdmin;
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@u.FullName</div>
+                                <div class="small text-secondary">@u.UserName</div>
+                            </td>
+                            <td>@u.Email</td>
+                            <td><span class="adm-pill">@u.Role</span></td>
+                            <td>
+                                @if (u.IsLocked)
+                                {
+                                    <span class="adm-badge adm-badge--off">Locked</span>
+                                }
+                                else
+                                {
+                                    <span class="adm-badge adm-badge--on">Active</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if (!isSuper)
+                                {
+                                    <form asp-action="ChangeRole" asp-route-id="@u.Id" method="post" class="d-inline"
+                                          data-confirm="Change the role of @u.UserName?">
+                                        <input type="hidden" name="role" value="@(u.Role == SD.Admin ? SD.Customer : SD.Admin)" />
+                                        <button class="btn btn-sm btn-outline-light">@(u.Role == SD.Admin ? "Make customer" : "Make admin")</button>
+                                    </form>
+                                    <form asp-action="LockUnlock" asp-route-id="@u.Id" method="post" class="d-inline"
+                                          data-confirm="@(u.IsLocked ? "Unlock" : "Lock") @u.UserName?">
+                                        <button class="btn btn-sm @(u.IsLocked ? "btn-outline-success" : "btn-outline-danger")">@(u.IsLocked ? "Unlock" : "Lock")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="adm-empty">No users found.</p>
+    }
+</div>

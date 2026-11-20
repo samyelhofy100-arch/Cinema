@@ -1,16 +1,24 @@
-﻿namespace Cinema.ModelView
+﻿
+namespace Cinema.ViewModels
 {
     public class RegisterVM
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string UserName { get; set; }
-        [EmailAddress, DataType(DataType.EmailAddress)]
-        public string Email { get; set; }
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
-        [DataType(DataType.Password), Compare(nameof(Password))]
-        public string ConfirmPassword { get; set; }
+        [Required, MaxLength(100), Display(Name = "Full name")]
+        public string FullName { get; set; } = string.Empty;
+        [Required, MaxLength(500), Display(Name = "Address")]
+        public string Address { get; set; } = string.Empty;
+
+        [Required, MaxLength(50), Display(Name = "Username")]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required, DataType(DataType.Password), Display(Name = "Confirm password")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

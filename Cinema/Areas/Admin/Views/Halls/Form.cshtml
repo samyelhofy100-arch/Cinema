@@ -1,0 +1,86 @@
+﻿@model HallFormVM
+
+@{
+    bool isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Rename hall" : "Add hall";
+}
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" novalidate>
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CinemaId" />
+        <input type="hidden" asp-for="Rows" />
+        <input type="hidden" asp-for="SeatsPerRow" />
+    }
+
+    <div class="adm-card adm-card--pad adm-form-narrow">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+        @if (isEdit)
+        {
+            <p class="text-secondary">
+                @Model.CinemaName · @Model.Rows rows × @Model.SeatsPerRow seats<br />
+                <span class="small">The layout can't be changed after creation. To change it, delete the hall and add it again.</span>
+            </p>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label asp-for="CinemaId" class="form-label"></label>
+                <select asp-for="CinemaId" class="form-select">
+                    <option value="0">-- Select cinema --</option>
+                    @foreach (var c in Model.Cinemas)
+                    {
+                        <option value="@c.Id" selected="@(Model.CinemaId == c.Id)">@c.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="CinemaId" class="adm-error"></span>
+            </div>
+        }
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" placeholder="e.g. Hall 1 / IMAX" />
+            <span asp-validation-for="Name" class="adm-error"></span>
+        </div>
+
+        @if (!isEdit)
+        {
+            <div class="row g-3 mb-2">
+                <div class="col-6">
+                    <label asp-for="Rows" class="form-label"></label>
+                    <input asp-for="Rows" type="number" min="1" max="26" class="form-control" id="rows" />
+                    <span asp-validation-for="Rows" class="adm-error"></span>
+                </div>
+                <div class="col-6">
+                    <label asp-for="SeatsPerRow" class="form-label"></label>
+                    <input asp-for="SeatsPerRow" type="number" min="1" max="30" class="form-control" id="cols" />
+                    <span asp-validation-for="SeatsPerRow" class="adm-error"></span>
+                </div>
+            </div>
+            <p class="small text-secondary">
+                Rows are named A, B, C… and seats are numbered 1, 2, 3…
+                Total: <strong id="total">0</strong> seats.
+            </p>
+        }
+
+        <div class="adm-actions adm-actions--inline">
+            <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+            <button type="submit" class="btn btn-warning fw-semibold px-4">@(isEdit ? "Save" : "Add hall")</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            var r = document.getElementById("rows"), c = document.getElementById("cols"), t = document.getElementById("total");
+            if (!r || !c || !t) return;
+            function update() { t.textContent = (parseInt(r.value, 10) || 0) * (parseInt(c.value, 10) || 0); }
+            r.addEventListener("input", update);
+            c.addEventListener("input", update);
+            update();
+        })();
+    </script>
+}

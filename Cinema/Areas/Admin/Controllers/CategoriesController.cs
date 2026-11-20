@@ -1,11 +1,14 @@
 ﻿using Cinema.Data;
+using Cinema.Helpers;
 using Cinema.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.AdminRoles)]
     public class CategoriesController : Controller
     {
         // private readonly ApplicationDbContext context = new ApplicationDbContext();

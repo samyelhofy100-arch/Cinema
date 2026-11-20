@@ -1,19 +1,21 @@
 ﻿
+using Cinema.Helpers;
 using Cinema.Repository;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.AdminRoles)]
     public class MoviesController : Controller
     {
-        // private readonly ApplicationDbContext context = new ApplicationDbContext();
         private readonly IRepository<Movie> _movieRepository;
         private readonly IRepository<Actor> _actorRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Cinemas> _cinemasRepository;
+        private readonly IRepository<OrderItem> _orderItemRepository;
         private readonly IMovieActorRepository _movieActorRepository;
         private readonly IMovieSubImageRepository _movieSubImageRepository;
-
 
         private const string Folder = "Images/MoiveImg";
         private const long MaxImageSize = 5 * 1024 * 1024;
@@ -23,7 +25,14 @@ namespace Cinema.Areas.Admin.Controllers
             ".jpg", ".jpeg", ".png", ".webp"
         };
 
-        public MoviesController(IRepository<Movie> movieRepository, IRepository<Actor> actorRepository, IRepository<Category> categoryRepository, IRepository<Cinemas> cinemasRepository, IMovieActorRepository movieActorRepository, IMovieSubImageRepository movieSubImageRepository)
+        public MoviesController(
+            IRepository<Movie> movieRepository,
+            IRepository<Actor> actorRepository,
+            IRepository<Category> categoryRepository,
+            IRepository<Cinemas> cinemasRepository,
+            IMovieActorRepository movieActorRepository,
+            IMovieSubImageRepository movieSubImageRepository,
+            IRepository<OrderItem> orderItemRepository)
         {
             _movieRepository = movieRepository;
             _actorRepository = actorRepository;
@@ -31,37 +40,36 @@ namespace Cinema.Areas.Admin.Controllers
             _cinemasRepository = cinemasRepository;
             _movieActorRepository = movieActorRepository;
             _movieSubImageRepository = movieSubImageRepository;
+            _orderItemRepository = orderItemRepository;
         }
 
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 8;
-            // int totalMovies = context.Movies.Count();
+
             int totalMovies = await _movieRepository.CountAsync();
+
             int totalPages = (int)Math.Ceiling(
-               totalMovies / (double)pageSize
-           );
+                totalMovies / (double)pageSize
+            );
 
             page = totalPages == 0
                 ? 1
                 : Math.Clamp(page, 1, totalPages);
 
-            //var movies = context.Movies
-            //    .Include(m => m.Category)
-            //    .Include(m => m.Cinema)
-            //    .OrderBy(m => m.Name)
-            //    .Skip((page - 1) * pageSize)
-            //    .Take(pageSize)
-            //    .ToList();
-            var movies = await _movieRepository.GetAllAsync(includes: [m => m.Category, m => m.Cinema],
+            var movies = await _movieRepository.GetAllAsync(
+                includes: [m => m.Category, m => m.Cinema],
                 orderBy: p => p.OrderBy(m => m.Name),
                 skip: ((page - 1) * pageSize),
-                take: (pageSize));
+                take: pageSize
+            );
+
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
 
             return View(movies);
         }
+
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -69,23 +77,25 @@ namespace Cinema.Areas.Admin.Controllers
                 m => m.Id == id,
                 includes: [m => m.Category, m => m.Cinema, m => m.SubImage],
                 includeProperties: ["MovieActors.Actor"],
-                isTracked: false);
+                isTracked: false
+            );
 
             if (movie == null)
                 return NotFound();
 
             return View(movie);
         }
+
         [HttpGet]
         public async Task<IActionResult> Create()
         {
             ViewBag.Categories = await _categoryRepository.GetAllAsync();
             ViewBag.Cinemas = await _cinemasRepository.GetAllAsync();
+
             return View();
         }
 
         [HttpPost]
-
         public async Task<IActionResult> Create(
             Movie movie,
             IFormFile? ImageFile,
@@ -125,14 +135,13 @@ namespace Cinema.Areas.Admin.Controllers
 
                 TempData["CreateErrors"] = string.Join(" | ", errors);
 
-               await LoadData();
+                await LoadData();
+
                 return View(movie);
             }
 
             movie.MainImg = SaveImage(ImageFile!);
 
-            //context.Movies.Add(movie);
-            //context.SaveChanges();
             await _movieRepository.AddAsync(movie);
             await _movieRepository.CommitAsync();
 
@@ -143,19 +152,13 @@ namespace Cinema.Areas.Admin.Controllers
                 {
                     string fileName = SaveImage(image);
 
-                    //context.MovieSubImages.Add(
-                    //    new MovieSubImage
-                    //    {
-                    //        Img = fileName,
-                    //        MovieId = movie.Id
-                    //    }
-                    //);
                     await _movieSubImageRepository.AddAsync(
-                         new MovieSubImage
-                         {
-                             Img = fileName,
-                             MovieId = movie.Id
-                         });
+                        new MovieSubImage
+                        {
+                            Img = fileName,
+                            MovieId = movie.Id
+                        }
+                    );
                 }
             }
 
@@ -163,29 +166,21 @@ namespace Cinema.Areas.Admin.Controllers
             {
                 foreach (int actorId in ActorIds.Distinct())
                 {
-                    // if (context.Actors.Any(a => a.Id == actorId))
                     if (await _actorRepository.AnyAsync(a => a.Id == actorId))
                     {
-                        //context.MovieActors.Add(
-                        //    new MovieActor
-                        //    {
-                        //        MovieId = movie.Id,
-                        //        ActorId = actorId
-                        //    }
-                        //);
-
                         await _movieActorRepository.AddAsync(
-                             new MovieActor
-                             {
-                                 MovieId = movie.Id,
-                                 ActorId = actorId
-                             });
+                            new MovieActor
+                            {
+                                MovieId = movie.Id,
+                                ActorId = actorId
+                            }
+                        );
                     }
                 }
             }
 
-            //context.SaveChanges();
             await _movieSubImageRepository.CommitAsync();
+
             TempData["Success"] =
                 $"Movie \"{movie.Name}\" was created.";
 
@@ -195,32 +190,30 @@ namespace Cinema.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            //var movie = context.Movies
-            //    .Include(m => m.MovieActors)
-            //    .Include(m => m.SubImage)
-            //    .FirstOrDefault(m => m.Id == id);
-            var movie = await _movieRepository.GetOneAsync(m => m.Id == id, includes: [m => m.MovieActors, m => m.SubImage]);
+            var movie = await _movieRepository.GetOneAsync(
+                m => m.Id == id,
+                includes: [m => m.MovieActors, m => m.SubImage]
+            );
+
             if (movie == null)
                 return NotFound();
 
-           await LoadData();
+            await LoadData();
 
             return View(movie);
         }
 
         [HttpPost]
-
         public async Task<IActionResult> Edit(
             Movie input,
             IFormFile? ImageFile,
             List<IFormFile>? SubImages,
             List<int>? ActorIds)
         {
-            //var movie = context.Movies
-            //    .Include(m => m.MovieActors)
-            //    .Include(m => m.SubImage)
-            //    .FirstOrDefault(m => m.Id == input.Id);
-            var movie = await _movieRepository.GetOneAsync(m => m.Id == input.Id, includes: [m => m.MovieActors, m => m.SubImage]);
+            var movie = await _movieRepository.GetOneAsync(
+                m => m.Id == input.Id,
+                includes: [m => m.MovieActors, m => m.SubImage]
+            );
 
             if (movie == null)
                 return NotFound();
@@ -247,7 +240,8 @@ namespace Cinema.Areas.Admin.Controllers
 
             if (!ModelState.IsValid)
             {
-               await LoadData();
+                await LoadData();
+
                 return View(movie);
             }
 
@@ -262,6 +256,7 @@ namespace Cinema.Areas.Admin.Controllers
             if (ImageFile != null && ImageFile.Length > 0)
             {
                 string oldImage = movie.MainImg;
+
                 movie.MainImg = SaveImage(ImageFile);
 
                 DeleteImage(oldImage);
@@ -275,60 +270,43 @@ namespace Cinema.Areas.Admin.Controllers
                     DeleteImage(oldSubImage.Img);
                 }
 
-                //context.MovieSubImages.RemoveRange(movie.SubImage);
                 _movieSubImageRepository.RemoveRange(movie.SubImage);
+
                 foreach (var image in SubImages.Where(
                     x => x != null && x.Length > 0))
                 {
                     string fileName = SaveImage(image);
 
-                    //context.MovieSubImages.Add(
-                    //    new MovieSubImage
-                    //    {
-                    //        Img = fileName,
-                    //        MovieId = movie.Id
-                    //    }
-                    //);
                     await _movieSubImageRepository.AddAsync(
-                         new MovieSubImage
-                         {
-                             Img = fileName,
-                             MovieId = movie.Id
-                         });
+                        new MovieSubImage
+                        {
+                            Img = fileName,
+                            MovieId = movie.Id
+                        }
+                    );
                 }
             }
 
-            //context.MovieActors.RemoveRange(movie.MovieActors);
             _movieActorRepository.RemoveRange(movie.MovieActors);
 
             if (ActorIds != null)
             {
                 foreach (int actorId in ActorIds.Distinct())
                 {
-                    //   if (context.Actors.Any(a => a.Id == actorId))
                     if (await _actorRepository.AnyAsync(a => a.Id == actorId))
                     {
-                        //context.MovieActors.Add(
-                        //    new MovieActor
-                        //    {
-                        //        MovieId = movie.Id,
-                        //        ActorId = actorId
-                        //    }
-                        //);
                         await _movieActorRepository.AddAsync(
-                             new MovieActor
-                             {
-                                 MovieId = movie.Id,
-                                 ActorId = actorId
-
-                             });
+                            new MovieActor
+                            {
+                                MovieId = movie.Id,
+                                ActorId = actorId
+                            }
+                        );
                     }
                 }
             }
 
-          //  context.SaveChanges();
- 
-           await _movieRepository.CommitAsync();
+            await _movieRepository.CommitAsync();
 
             TempData["Success"] =
                 $"Movie \"{movie.Name}\" was updated.";
@@ -337,17 +315,24 @@ namespace Cinema.Areas.Admin.Controllers
         }
 
         [HttpPost]
-
         public async Task<IActionResult> Delete(int id)
         {
-            //var movie = context.Movies
-            //    .Include(m => m.MovieActors)
-            //    .Include(m => m.SubImage)
-            //    .FirstOrDefault(m => m.Id == id);
-            var movie =await _movieRepository.GetOneAsync(m => m.Id == id, includes: [m => m.MovieActors, m => m.SubImage]);
+            var movie = await _movieRepository.GetOneAsync(
+                m => m.Id == id,
+                includes: [m => m.MovieActors, m => m.SubImage]
+            );
 
             if (movie == null)
                 return NotFound();
+
+            // Prevent deleting movies that have orders.
+            if (await _orderItemRepository.AnyAsync(i => i.MovieId == id))
+            {
+                TempData["Error"] =
+                    $"\"{movie.Name}\" has orders and cannot be deleted. Mark it as not available instead.";
+
+                return RedirectToAction(nameof(Index));
+            }
 
             string movieName = movie.Name;
 
@@ -358,15 +343,11 @@ namespace Cinema.Areas.Admin.Controllers
                 DeleteImage(image.Img);
             }
 
-            //context.MovieActors.RemoveRange(movie.MovieActors);
-            //context.MovieSubImages.RemoveRange(movie.SubImage);
-            //context.Movies.Remove(movie);
-            //context.SaveChanges();
-
             _movieActorRepository.RemoveRange(movie.MovieActors);
             _movieSubImageRepository.RemoveRange(movie.SubImage);
             _movieRepository.Remove(movie);
-           await _movieRepository.CommitAsync();
+
+            await _movieRepository.CommitAsync();
 
             TempData["Success"] =
                 $"Movie \"{movieName}\" was deleted.";
@@ -394,6 +375,7 @@ namespace Cinema.Areas.Admin.Controllers
             }
 
             error = string.Empty;
+
             return true;
         }
 
@@ -432,7 +414,6 @@ namespace Cinema.Areas.Admin.Controllers
             if (string.IsNullOrWhiteSpace(fileName))
                 return;
 
-            // Only allow deleting files inside the movies folder.
             if (Path.GetFileName(fileName) != fileName)
                 return;
 
@@ -451,20 +432,15 @@ namespace Cinema.Areas.Admin.Controllers
 
         private async Task LoadData()
         {
-            //ViewBag.Categories = context.Categories
-            //    .OrderBy(c => c.Name)
-            //    .ToList();
+            ViewBag.Categories = await _categoryRepository.GetAllAsync(
+                orderBy: p => p.OrderBy(c => c.Name)
+            );
 
-            ViewBag.Categories =await _categoryRepository.GetAllAsync(orderBy: p => p.OrderBy(c => c.Name));
+            ViewBag.Cinemas = await _cinemasRepository.GetAllAsync();
 
-            //  ViewBag.Cinemas = context.Cinemas.ToList();
-
-            ViewBag.Cinemas =await _cinemasRepository.GetAllAsync();
-
-            // ViewBag.Actors = context.Actors.OrderBy(a => a.Name).ToList();
-            
-            ViewBag.Actors =await _actorRepository.GetAllAsync(orderBy:p=>p.OrderBy(c => c.Name));
-
+            ViewBag.Actors = await _actorRepository.GetAllAsync(
+                orderBy: p => p.OrderBy(c => c.Name)
+            );
         }
     }
 }

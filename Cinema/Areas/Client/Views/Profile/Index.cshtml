@@ -1,0 +1,104 @@
+﻿@model Cinema.ViewModels.ProfileVM
+@{
+    ViewData["Title"] = "My profile";
+    string initial = string.IsNullOrWhiteSpace(Model.FullName) ? "?" : Model.FullName.Trim()[0].ToString().ToUpper();
+}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title">My profile</h1>
+        <p class="page-hero__sub">@Model.UserName</p>
+    </div>
+</section>
+
+<div class="container pb-4" style="max-width: 980px">
+    @if (TempData["Success"] is string ok)
+    {
+        <div class="alert alert-success">✔ @ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert alert-danger">⚠ @err</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form asp-action="Index" method="post" enctype="multipart/form-data" class="auth-card auth-card--full">
+                <h2 class="h5 fw-bold mb-3">Personal info</h2>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                <div class="profile-avatar mb-3">
+                    @if (!string.IsNullOrEmpty(Model.ExistingImg))
+                    {
+                        <img id="avatarPreview" src="~/Images/UserImg/@Model.ExistingImg" alt="" />
+                    }
+                    else
+                    {
+                        <img id="avatarPreview" alt="" style="display:none" />
+                        <span id="avatarInitial">@initial</span>
+                    }
+                </div>
+                <div class="mb-3">
+                    <input asp-for="ImgFile" type="file" class="form-control" accept="image/*" />
+                    <span asp-validation-for="ImgFile" class="auth-error"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="auth-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="auth-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PhoneNumber" class="form-label"></label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                    <span asp-validation-for="PhoneNumber" class="auth-error"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Address" class="form-label"></label>
+                    <input asp-for="Address" class="form-control" />
+                    <span asp-validation-for="Address" class="auth-error"></span>
+                </div>
+
+                <button type="submit" class="btn btn-warning fw-semibold px-4">Save changes</button>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <form asp-action="ChangePassword" method="post" class="auth-card auth-card--full">
+                <h2 class="h5 fw-bold mb-3">Change password</h2>
+                <div class="mb-3">
+                    <label class="form-label" for="CurrentPassword">Current password</label>
+                    <input type="password" id="CurrentPassword" name="CurrentPassword" class="form-control" autocomplete="current-password" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="NewPassword">New password</label>
+                    <input type="password" id="NewPassword" name="NewPassword" class="form-control" autocomplete="new-password" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="ConfirmNewPassword">Confirm new password</label>
+                    <input type="password" id="ConfirmNewPassword" name="ConfirmNewPassword" class="form-control" autocomplete="new-password" required />
+                </div>
+                <button type="submit" class="btn btn-outline-light">Update password</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelector('input[type=file]').addEventListener('change', function () {
+            var f = this.files && this.files[0];
+            if (!f) return;
+            var img = document.getElementById('avatarPreview');
+            var initial = document.getElementById('avatarInitial');
+            img.src = URL.createObjectURL(f);
+            img.style.display = 'block';
+            if (initial) initial.style.display = 'none';
+        });
+    </script>
+}

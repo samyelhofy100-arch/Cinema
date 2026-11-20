@@ -1,3 +1,4 @@
+
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Cinema.Models;
@@ -13,7 +14,8 @@ namespace Cinema.Areas.Client.Controllers
         private readonly IRepository<Actor> _actorRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Cinemas> _cinemaRepository;
-        int PageSize = 8;
+
+        private int PageSize = 8;
 
         public HomeController(
             IRepository<Movie> movieRepository,
@@ -27,7 +29,12 @@ namespace Cinema.Areas.Client.Controllers
             _cinemaRepository = cinemaRepository;
         }
 
-        public async Task<IActionResult> Index(string? search, int? categoryId, int? cinemaId, int? actorId, int page = 1)
+        public async Task<IActionResult> Index(
+            string? search,
+            int? categoryId,
+            int? cinemaId,
+            int? actorId,
+            int page = 1)
         {
             Expression<Func<Movie, bool>> filter = m =>
                 (string.IsNullOrWhiteSpace(search) || m.Name.Contains(search!)) &&
@@ -36,9 +43,16 @@ namespace Cinema.Areas.Client.Controllers
                 (!actorId.HasValue || m.MovieActors.Any(ma => ma.ActorId == actorId));
 
             int totalCount = await _movieRepository.CountAsync(filter);
-            int totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
-            if (page < 1) page = 1;
-            if (totalPages > 0 && page > totalPages) page = totalPages;
+
+            int totalPages = (int)Math.Ceiling(
+                totalCount / (double)PageSize
+            );
+
+            if (page < 1)
+                page = 1;
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
 
             var pageItems = (await _movieRepository.GetAllAsync(
                 filter,
@@ -46,13 +60,16 @@ namespace Cinema.Areas.Client.Controllers
                 orderBy: q => q.OrderBy(m => m.Id),
                 skip: (page - 1) * PageSize,
                 take: PageSize,
-                isTracked: false)).ToList();
+                isTracked: false
+            )).ToList();
 
             ViewBag.Categories = await _categoryRepository.GetAllAsync();
+
             ViewBag.CategoryId = categoryId;
             ViewBag.CinemaId = cinemaId;
             ViewBag.ActorId = actorId;
             ViewBag.Search = search;
+
             ViewBag.Page = page;
             ViewBag.PageSize = PageSize;
             ViewBag.TotalPages = totalPages;
@@ -61,35 +78,66 @@ namespace Cinema.Areas.Client.Controllers
             return View(pageItems);
         }
 
+        [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _movieRepository.GetOneAsync(
                 m => m.Id == id,
-                includes: [m => m.Category, m => m.Cinema, m => m.SubImage],
-                includeProperties: ["MovieActors.Actor"]);
+                includes:
+                [
+                    m => m.Category,
+                    m => m.Cinema,
+                    m => m.SubImage,
+                    m => m.MovieActors
+                ],
+                includeProperties: ["MovieActors.Actor"],
+                isTracked: false
+            );
 
             if (movie == null)
                 return NotFound();
+
+            var relatedMovies = await _movieRepository.GetAllAsync(
+                m => m.CategoryId == movie.CategoryId && m.Id != movie.Id,
+                includes: [m => m.Category, m => m.Cinema],
+                orderBy: q => q.OrderBy(m => Guid.NewGuid()),
+                take: 4,
+                isTracked: false
+            );
+
+            ViewBag.Related = relatedMovies;
 
             return View(movie);
         }
 
         public async Task<IActionResult> Cinemas()
         {
-            var cinemas = await _cinemaRepository.GetAllAsync(includes: [c => c.Movies]);
+            var cinemas = await _cinemaRepository.GetAllAsync(
+                includes: [c => c.Movies]
+            );
+
             return View(cinemas);
         }
 
         public async Task<IActionResult> Actors()
         {
-            var actors = await _actorRepository.GetAllAsync(includes: [a => a.MovieActors]);
+            var actors = await _actorRepository.GetAllAsync(
+                includes: [a => a.MovieActors]
+            );
+
             return View(actors);
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [ResponseCache(
+            Duration = 0,
+            Location = ResponseCacheLocation.None,
+            NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
     }
 }

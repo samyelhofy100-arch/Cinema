@@ -16,6 +16,13 @@ namespace Cinema.Data
         public DbSet<MovieSubImage> MovieSubImages => Set<MovieSubImage>();
         public DbSet<MovieActor> MovieActors => Set<MovieActor>();
         public DbSet<ApplicationUserOtp> ApplicationUserOtps { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Hall> Halls { get; set; }
+        public DbSet<Seat> Seats { get; set; }
+        public DbSet<Showtime> Showtimes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +40,24 @@ namespace Cinema.Data
                 .HasOne(ma => ma.Actor)
                 .WithMany(a => a.MovieActors)
                 .HasForeignKey(ma => ma.ActorId);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(i => i.Movie).WithMany()
+                .HasForeignKey(i => i.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Showtime>()
+                .HasOne(s => s.Hall).WithMany(h => h.Showtimes)
+                .HasForeignKey(s => s.HallId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Showtime>()
+                .HasOne(s => s.Movie).WithMany()
+                .HasForeignKey(s => s.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Seat>()
+                .HasIndex(s => new { s.HallId, s.Row, s.Number })
+                .IsUnique();
         }
     }
 }

@@ -1,0 +1,74 @@
+﻿@model ShowtimeCreateVM
+
+@{
+    ViewData["Title"] = "Add showtimes";
+}
+
+<form asp-action="Create" method="post" novalidate>
+    <div class="adm-card adm-card--pad adm-form-narrow">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+        <div class="mb-3">
+            <label asp-for="MovieId" class="form-label"></label>
+            <select asp-for="MovieId" class="form-select">
+                <option value="0">-- Select movie --</option>
+                @foreach (var m in Model.Movies)
+                {
+                    <option value="@m.Id" selected="@(Model.MovieId == m.Id)">@m.Name</option>
+                }
+            </select>
+            <span asp-validation-for="MovieId" class="adm-error"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="HallId" class="form-label"></label>
+            <select asp-for="HallId" class="form-select">
+                <option value="0">-- Select hall --</option>
+                @foreach (var g in Model.Halls.GroupBy(h => h.Cinema.Name))
+                {
+                    <optgroup label="@g.Key">
+                        @foreach (var h in g)
+                        {
+                            <option value="@h.Id" selected="@(Model.HallId == h.Id)">@h.Name (@(h.Rows * h.SeatsPerRow) seats)</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <span asp-validation-for="HallId" class="adm-error"></span>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-7">
+                <label asp-for="StartDate" class="form-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="adm-error"></span>
+            </div>
+            <div class="col-5">
+                <label asp-for="Days" class="form-label"></label>
+                <input asp-for="Days" type="number" min="1" max="30" class="form-control" />
+                <span asp-validation-for="Days" class="adm-error"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Times" class="form-label"></label>
+            <input asp-for="Times" class="form-control" placeholder="14:00, 17:30, 21:00" />
+            <div class="form-text">
+                24-hour format, separated by commas. A showtime is created for each time on each day.
+                Showtimes in the same hall must start at least 3 hours apart.
+            </div>
+            <span asp-validation-for="Times" class="adm-error"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" type="number" step="0.01" min="0" class="form-control" />
+            <span asp-validation-for="Price" class="adm-error"></span>
+        </div>
+
+        <div class="adm-actions adm-actions--inline">
+            <a asp-action="Index" class="btn btn-outline-light">Cancel</a>
+            <button type="submit" class="btn btn-warning fw-semibold px-4">Add showtimes</button>
+        </div>
+    </div>
+</form>

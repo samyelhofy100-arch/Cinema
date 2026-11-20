@@ -1,7 +1,8 @@
-﻿
-using Cinema.Data;
+﻿using Cinema.Data;
+using Cinema.Helpers;
 using Cinema.Models;
 using Cinema.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.AdminRoles)]
     public class ActorsController : Controller
     {
        // private readonly ApplicationDbContext context =

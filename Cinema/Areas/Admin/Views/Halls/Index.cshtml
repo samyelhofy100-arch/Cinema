@@ -1,0 +1,46 @@
+﻿@model List<Hall>
+
+@{
+    ViewData["Title"] = "Halls";
+}
+
+<div class="adm-card">
+    <div class="adm-card__head">
+        <h2>All halls</h2>
+        <a asp-action="Create" class="btn btn-warning fw-semibold">+ Add hall</a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table adm-table align-middle mb-0">
+                <thead>
+                    <tr><th>Cinema</th><th>Hall</th><th>Layout</th><th>Seats</th><th>Showtimes</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in Model)
+                    {
+                        <tr>
+                            <td>@h.Cinema.Name</td>
+                            <td class="fw-semibold">@h.Name</td>
+                            <td class="text-secondary">@h.Rows rows × @h.SeatsPerRow seats</td>
+                            <td><span class="adm-pill">@(h.Rows * h.SeatsPerRow)</span></td>
+                            <td><span class="adm-pill">@h.Showtimes.Count</span></td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@h.Id" class="btn btn-sm btn-outline-light">Rename</a>
+                                <form asp-action="Delete" asp-route-id="@h.Id" method="post" class="d-inline"
+                                      data-confirm="Delete the hall &quot;@h.Name&quot; and all its seats?">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="adm-empty">No halls yet. Add the first one!</p>
+    }
+</div>

@@ -1,4 +1,5 @@
-﻿@model Movie
+﻿
+@model Movie
 
 @{
     ViewData["Title"] = Model.Name;
@@ -22,7 +23,13 @@
 
                 <div>
                     <span class="chip chip--tag">@Model.Category?.Name</span>
-                    <a class="chip chip--cinema" asp-action="Index" asp-route-cinemaId="@Model.CinemaId">📍 @Model.Cinema?.Name</a>
+
+                    <a class="chip chip--cinema"
+                       asp-action="Index"
+                       asp-route-cinemaId="@Model.CinemaId">
+                        📍 @Model.Cinema?.Name
+                    </a>
+
                     @if (Model.Status)
                     {
                         <span class="chip chip--on">Available</span>
@@ -33,18 +40,75 @@
                     }
                 </div>
 
-                <div class="detail-price">@Model.Price.ToString("0.##") <small>EGP</small></div>
+                <div class="detail-price">
+                    @Model.Price.ToString("0.##") <small>EGP</small>
+                </div>
 
                 @if (Model.DateTime.HasValue)
                 {
-                    <p class="detail-date">🗓 @Model.DateTime.Value.ToString("dddd, dd MMM yyyy - hh:mm tt")</p>
+                    <p class="detail-date">
+                        🗓 @Model.DateTime.Value.ToString("dddd, dd MMM yyyy - hh:mm tt")
+                    </p>
                 }
 
                 <p class="detail-desc">@Model.Description</p>
 
+                @if (Model.Status)
+                {
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form asp-controller="Cart"
+                              asp-action="AddToCart"
+                              method="post"
+                              class="d-flex flex-wrap align-items-center gap-2 mt-4">
+
+                            <input type="hidden" name="movieId" value="@Model.Id" />
+
+                            <div class="qty-box">
+                                <button type="button" class="qty-btn" data-qty="-1">−</button>
+
+                                <input type="number"
+                                       name="count"
+                                       value="1"
+                                       min="1"
+                                       max="10"
+                                       class="qty-input" />
+
+                                <button type="button" class="qty-btn" data-qty="1">+</button>
+                            </div>
+
+                            <button type="submit" class="btn btn-dark">
+                                🛒 Add to cart
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a class="btn btn-dark mt-4"
+                           asp-controller="Account"
+                           asp-action="Login"
+                           asp-route-returnUrl="@Context.Request.Path">
+                            Login to book
+                        </a>
+                    }
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary mt-4" disabled>
+                        Not available
+                    </button>
+                }
+
                 <div class="d-flex flex-wrap gap-2 mt-4">
-                    <a asp-action="Index" class="btn btn-outline-dark">&larr; Back to movies</a>
-                    <a asp-action="Index" asp-route-cinemaId="@Model.CinemaId" class="btn btn-dark">More at @Model.Cinema?.Name</a>
+                    <a asp-action="Index" class="btn btn-outline-dark">
+                        &larr; Back to movies
+                    </a>
+
+                    <a asp-action="Index"
+                       asp-route-cinemaId="@Model.CinemaId"
+                       class="btn btn-dark">
+                        More at @Model.Cinema?.Name
+                    </a>
                 </div>
             </div>
         </div>
@@ -53,13 +117,21 @@
     @if (Model.SubImage.Any())
     {
         <h3 class="section-title">Gallery</h3>
+
         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
             @foreach (var img in Model.SubImage)
             {
                 <div class="col reveal">
-                    <a href="#" class="gallery-item" data-bs-toggle="modal" data-bs-target="#lightbox"
+                    <a href="#"
+                       class="gallery-item"
+                       data-bs-toggle="modal"
+                       data-bs-target="#lightbox"
                        data-src="@Url.Content("~/Images/MoiveImg/" + img.Img)">
-                        <img src="~/Images/MoiveImg/@img.Img" alt="@Model.Name" loading="lazy" data-fallback />
+
+                        <img src="~/Images/MoiveImg/@img.Img"
+                             alt="@Model.Name"
+                             loading="lazy"
+                             data-fallback />
                     </a>
                 </div>
             }
@@ -69,13 +141,55 @@
     @if (Model.MovieActors.Any())
     {
         <h3 class="section-title">Cast</h3>
+
         <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-4">
             @foreach (var ma in Model.MovieActors)
             {
                 <div class="col reveal">
-                    <a asp-action="Index" asp-route-actorId="@ma.Actor.Id" class="cast-card">
-                        <img src="~/Images/ActorImg/@ma.Actor.Img" alt="@ma.Actor.Name" loading="lazy" data-fallback />
+                    <a asp-action="Index"
+                       asp-route-actorId="@ma.Actor.Id"
+                       class="cast-card">
+
+                        <img src="~/Images/ActorImg/@ma.Actor.Img"
+                             alt="@ma.Actor.Name"
+                             loading="lazy"
+                             data-fallback />
+
                         <div>@ma.Actor.Name</div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+
+    @{
+        var related = ViewBag.Related as List<Movie>;
+    }
+
+    @if (related != null && related.Any())
+    {
+        <h3 class="section-title">You may also like</h3>
+
+        <div class="row row-cols-2 row-cols-md-4 g-4">
+            @foreach (var r in related)
+            {
+                <div class="col reveal">
+                    <a asp-action="Details"
+                       asp-route-id="@r.Id"
+                       class="related-card">
+
+                        <img src="~/Images/MoiveImg/@r.MainImg"
+                             alt="@r.Name"
+                             loading="lazy"
+                             data-fallback />
+
+                        <div class="related-card__name">
+                            @r.Name
+                        </div>
+
+                        <div class="related-card__price">
+                            @r.Price.ToString("0.##") EGP
+                        </div>
                     </a>
                 </div>
             }
@@ -88,9 +202,16 @@
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0">
             <div class="text-end">
-                <button type="button" class="btn-close btn-close-white mb-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close btn-close-white mb-2"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
             </div>
-            <img id="lightboxImg" class="img-fluid rounded lightbox-img mx-auto" alt="@Model.Name" />
+
+            <img id="lightboxImg"
+                 class="img-fluid rounded lightbox-img mx-auto"
+                 alt="@Model.Name" />
         </div>
     </div>
 </div>

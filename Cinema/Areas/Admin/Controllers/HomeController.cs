@@ -1,11 +1,14 @@
 using Cinema.Data;
+using Cinema.Helpers;
 using Cinema.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = SD.AdminRoles)]
     public class HomeController : Controller
     {
        // private readonly ApplicationDbContext _context;//= new ApplicationDbContext();
