@@ -75,6 +75,8 @@ namespace Cinema
             // Database Initializer
             builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
+            builder.Services.AddScoped<Cinema.Helpers.BookingService>();
+
             var app = builder.Build();
 
             // Database Seeding

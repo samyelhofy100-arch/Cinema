@@ -61,7 +61,7 @@ namespace Cinema.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ShowtimeCreateVM vm)
         {
-            var times = ParseTimes(vm.Times, out var badToken);
+            var times = ParseTimes(vm.Times ?? string.Empty, out var badToken);
             if (badToken != null)
                 ModelState.AddModelError(nameof(vm.Times), $"\"{badToken}\" is not a valid time. Use 24-hour format like 14:00.");
             else if (times.Count == 0)

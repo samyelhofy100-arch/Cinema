@@ -1,91 +1,67 @@
-﻿@model List<Cart>
+﻿@model List<CartItem>
 
 @{
-    Layout = "~/Views/Shared/_LayoutClient.cshtml";
-    ViewData["Title"] = "My cart";
-    decimal total = (decimal)ViewBag.Total;
-    int tickets = Model.Sum(c => c.Count);
-    bool hasUnavailable = Model.Any(c => !c.Movie.Status);
+    ViewData["Title"] = "Your cart";
+    var total = Model.Sum(i => i.Showtime.Price);
+    int secondsLeft = Model.Any() ? Math.Max(0, (int)(Model.Min(i => i.ExpiresAt) - DateTime.Now).TotalSeconds) : 0;
 }
 
-<section class="page-hero">
-    <div class="container">
-        <h1 class="page-hero__title">My cart</h1>
-        <p class="page-hero__sub">@tickets ticket(s)</p>
-    </div>
-</section>
+<link rel="stylesheet" href="~/css/booking.css" asp-append-version="true" />
 
-<div class="container pb-4">
-    @if (Model.Any())
+<div class="container py-4">
+    <h2 class="mb-3">🛒 Your cart</h2>
+
+    @if (TempData["BookingError"] is string err)
     {
-        <div class="row g-4">
-            <div class="col-lg-8">
-                @foreach (var item in Model)
-                {
-                    <div class="cart-item @(item.Movie.Status ? "" : "cart-item--off")">
-                        <a asp-controller="Home" asp-action="Details" asp-route-id="@item.MovieId" class="cart-item__img">
-                            <img src="~/Images/MoiveImg/@item.Movie.MainImg" alt="@item.Movie.Name" data-fallback />
-                        </a>
+        <div class="alert alert-danger">@err</div>
+    }
 
-                        <div class="cart-item__info">
-                            <a asp-controller="Home" asp-action="Details" asp-route-id="@item.MovieId" class="cart-item__title">@item.Movie.Name</a>
-                            <div class="cart-item__meta">@item.Movie.Cinema?.Name</div>
-                            <div class="cart-item__price">@item.Movie.Price.ToString("0.##") EGP</div>
-                            @if (!item.Movie.Status)
-                            {
-                                <span class="chip chip--off">Not available</span>
-                            }
-                        </div>
-
-                        <div class="cart-item__qty">
-                            <form asp-action="Decrement" asp-route-id="@item.Id" method="post">
-                                <button type="submit" class="qty-btn" disabled="@(item.Count <= 1)">−</button>
-                            </form>
-                            <span class="cart-item__count">@item.Count</span>
-                            <form asp-action="Increment" asp-route-id="@item.Id" method="post">
-                                <button type="submit" class="qty-btn" disabled="@(item.Count >= 10)">+</button>
-                            </form>
-                        </div>
-
-                        <div class="cart-item__total">@((item.Movie.Price * item.Count).ToString("0.##")) EGP</div>
-
-                        <form asp-action="Remove" asp-route-id="@item.Id" method="post">
-                            <button type="submit" class="cart-item__x" title="Remove">✕</button>
-                        </form>
-                    </div>
-                }
-            </div>
-
-            <div class="col-lg-4">
-                <div class="cart-summary">
-                    <h2>Order summary</h2>
-                    <div class="cart-summary__row"><span>Tickets</span><strong>@tickets</strong></div>
-                    <div class="cart-summary__row"><span>Total</span><span class="cart-summary__total">@total.ToString("0.##") EGP</span></div>
-
-                    @if (hasUnavailable)
-                    {
-                        <div class="alert alert-warning small py-2">Remove the unavailable movies to continue.</div>
-                    }
-
-                    <form asp-controller="Checkout" asp-action="Pay" method="post">
-                        <button type="submit" class="btn btn-warning w-100 fw-semibold" disabled="@hasUnavailable">Pay with card 💳</button>
-                    </form>
-
-                    <form asp-action="Clear" method="post" class="mt-2"
-                          onsubmit="return confirm('Remove all items from your cart?');">
-                        <button type="submit" class="btn btn-outline-light w-100 btn-sm">Clear cart</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+    @if (!Model.Any())
+    {
+        <p class="text-secondary">Your cart is empty. <a asp-controller="Home" asp-action="Index">Browse movies</a></p>
     }
     else
     {
-        <div class="text-center py-5">
-            <div style="font-size:3.5rem">🛒</div>
-            <h4 class="mt-2">Your cart is empty</h4>
-            <p class="text-secondary">Pick a movie and add it to your cart.</p>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-warning fw-semibold">Browse movies</a>
+        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+            <span>Your seats are held for</span>
+            <strong class="fs-5" data-seconds="@secondsLeft">--:--</strong>
+        </div>
+
+        @foreach (var g in Model.GroupBy(i => i.ShowtimeId))
+        {
+            var st = g.First().Showtime;
+            <div class="bk-cart-card">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <div>
+                        <div class="fw-bold fs-5">@st.Movie.Name</div>
+                        <div class="text-secondary">@st.Hall.Cinema.Name · @st.Hall.Name · @st.StartTime.ToString("ddd dd MMM, hh:mm tt")</div>
+                    </div>
+                    <a asp-controller="Booking" asp-action="Seats" asp-route-showtimeId="@st.Id" class="btn btn-sm btn-outline-light align-self-start">Change seats</a>
+                </div>
+
+                <div class="bk-chips">
+                    @foreach (var item in g)
+                    {
+                        <form asp-action="Remove" asp-route-id="@item.Id" method="post" class="d-inline">
+                            <button class="bk-chip" title="Remove">@item.Seat.Label ✕</button>
+                        </form>
+                    }
+                </div>
+
+                <div class="text-end fw-semibold">@g.Count() × @st.Price.ToString("0.##") = @((g.Count() * st.Price).ToString("0.##")) EGP</div>
+            </div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+            <form asp-action="Clear" method="post" data-confirm="Clear the cart?">
+                <button class="btn btn-outline-danger">Clear cart</button>
+            </form>
+            <form asp-controller="Checkout" asp-action="Pay" method="post" class="d-flex align-items-center gap-3">
+                <span class="fs-5">Total: <strong>@total.ToString("0.##") EGP</strong></span>
+                <button class="btn btn-warning fw-semibold px-4">Pay with card</button>
+            </form>
         </div>
     }
 </div>
+
+<script src="~/js/booking.js" asp-append-version="true"></script>

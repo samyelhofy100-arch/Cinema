@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using Cinema.Models;
 using Cinema.Repository;
+using Cinema.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Areas.Client.Controllers
@@ -14,6 +15,7 @@ namespace Cinema.Areas.Client.Controllers
         private readonly IRepository<Actor> _actorRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Cinemas> _cinemaRepository;
+        private readonly BookingService booking;
 
         private int PageSize = 8;
 
@@ -21,12 +23,14 @@ namespace Cinema.Areas.Client.Controllers
             IRepository<Movie> movieRepository,
             IRepository<Actor> actorRepository,
             IRepository<Category> categoryRepository,
-            IRepository<Cinemas> cinemaRepository)
+            IRepository<Cinemas> cinemaRepository,
+            BookingService booking)
         {
             _movieRepository = movieRepository;
             _actorRepository = actorRepository;
             _categoryRepository = categoryRepository;
             _cinemaRepository = cinemaRepository;
+            this.booking = booking;
         }
 
         public async Task<IActionResult> Index(
@@ -96,6 +100,8 @@ namespace Cinema.Areas.Client.Controllers
 
             if (movie == null)
                 return NotFound();
+
+            ViewBag.Slots = await booking.GetSlotsAsync(movie.Id);
 
             var relatedMovies = await _movieRepository.GetAllAsync(
                 m => m.CategoryId == movie.CategoryId && m.Id != movie.Id,

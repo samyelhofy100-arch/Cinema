@@ -1,0 +1,30 @@
+﻿
+@model Order
+
+@foreach (var g in Model.Tickets.GroupBy(t => t.ShowtimeId))
+{
+    var st = g.First().Showtime;
+
+    <div class="bk-ticket">
+        <div>
+            <div class="fw-bold fs-5">@st.Movie.Name</div>
+            <div class="text-secondary">
+                @st.Hall.Cinema.Name · @st.Hall.Name
+            </div>
+
+            <div>
+                @st.StartTime.ToString("dddd dd MMM yyyy, hh:mm tt")
+            </div>
+
+            <div class="bk-chips mt-2">
+                @foreach (var t in g.OrderBy(t => t.Seat.Row)
+                                   .ThenBy(t => t.Seat.Number))
+                {
+                    <span class="bk-chip bk-chip--static">
+                        @t.Seat.Label <small>#@t.Code</small>
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+}

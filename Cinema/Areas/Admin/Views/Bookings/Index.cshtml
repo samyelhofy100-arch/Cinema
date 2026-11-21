@@ -1,0 +1,40 @@
+﻿@* Areas/Admin/Views/Bookings/Index.cshtml *@
+@model List<Order>
+
+@{ ViewData["Title"] = "Bookings"; }
+
+<div class="adm-card">
+    <div class="adm-card__head"><h2>Paid bookings</h2></div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table adm-table align-middle mb-0">
+                <thead><tr><th>#</th><th>Customer</th><th>Date</th><th>Tickets</th><th>Total</th></tr></thead>
+                <tbody>
+                    @foreach (var o in Model)
+                    {
+                        <tr>
+                            <td class="text-secondary">@o.Id</td>
+                            <td>@o.User.Email</td>
+                            <td>@o.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>
+                                @foreach (var g in o.Tickets.GroupBy(t => t.ShowtimeId))
+                                {
+                                    var st = g.First().Showtime;
+                                    <div>@st.Movie.Name · @st.StartTime.ToString("dd MMM HH:mm") ·
+                                        <span class="adm-pill">@string.Join(", ", g.Select(t => t.Seat.Label))</span></div>
+                                }
+                            </td>
+                            <td>@o.TotalAmount.ToString("0.##") EGP</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="adm-empty">No bookings yet.</p>
+    }
+</div>

@@ -1,5 +1,4 @@
-﻿
-@model Movie
+﻿@model Movie
 
 @{
     ViewData["Title"] = Model.Name;
@@ -55,42 +54,10 @@
 
                 @if (Model.Status)
                 {
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <form asp-controller="Cart"
-                              asp-action="AddToCart"
-                              method="post"
-                              class="d-flex flex-wrap align-items-center gap-2 mt-4">
-
-                            <input type="hidden" name="movieId" value="@Model.Id" />
-
-                            <div class="qty-box">
-                                <button type="button" class="qty-btn" data-qty="-1">−</button>
-
-                                <input type="number"
-                                       name="count"
-                                       value="1"
-                                       min="1"
-                                       max="10"
-                                       class="qty-input" />
-
-                                <button type="button" class="qty-btn" data-qty="1">+</button>
-                            </div>
-
-                            <button type="submit" class="btn btn-dark">
-                                🛒 Add to cart
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a class="btn btn-dark mt-4"
-                           asp-controller="Account"
-                           asp-action="Login"
-                           asp-route-returnUrl="@Context.Request.Path">
-                            Login to book
-                        </a>
-                    }
+                    @await Html.PartialAsync(
+                        "_Showtimes",
+                        (List<Cinema.ViewModels.ShowtimeSlotVM>)ViewBag.Slots
+                    )
                 }
                 else
                 {

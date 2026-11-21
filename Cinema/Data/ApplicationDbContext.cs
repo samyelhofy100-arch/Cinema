@@ -16,9 +16,9 @@ namespace Cinema.Data
         public DbSet<MovieSubImage> MovieSubImages => Set<MovieSubImage>();
         public DbSet<MovieActor> MovieActors => Set<MovieActor>();
         public DbSet<ApplicationUserOtp> ApplicationUserOtps { get; set; }
-        public DbSet<Cart> Carts { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Hall> Halls { get; set; }
         public DbSet<Seat> Seats { get; set; }
         public DbSet<Showtime> Showtimes { get; set; }
@@ -58,6 +58,25 @@ namespace Cinema.Data
             modelBuilder.Entity<Seat>()
                 .HasIndex(s => new { s.HallId, s.Row, s.Number })
                 .IsUnique();
+
+            modelBuilder.Entity<CartItem>(e =>
+            {
+                e.HasIndex(c => new { c.ShowtimeId, c.SeatId }).IsUnique();
+                e.HasOne(c => c.Seat).WithMany().HasForeignKey(c => c.SeatId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(c => c.Showtime).WithMany().HasForeignKey(c => c.ShowtimeId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Ticket>(e =>
+            {
+                e.HasIndex(t => new { t.ShowtimeId, t.SeatId }).IsUnique();
+                e.HasOne(t => t.Seat).WithMany().HasForeignKey(t => t.SeatId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(t => t.Showtime).WithMany().HasForeignKey(t => t.ShowtimeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(t => t.Order).WithMany(o => o.Tickets).HasForeignKey(t => t.OrderId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User).WithMany().HasForeignKey(o => o.UserId).OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

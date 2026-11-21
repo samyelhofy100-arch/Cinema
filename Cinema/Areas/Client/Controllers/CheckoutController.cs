@@ -1,5 +1,7 @@
-﻿using System.Security.Claims;
+﻿
+using System.Security.Claims;
 using Cinema.Data;
+using Cinema.Helpers;
 using Cinema.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,160 +14,269 @@ namespace Cinema.Areas.Client.Controllers
     [Authorize]
     public class CheckoutController : Controller
     {
-        private const string Currency = "egp";   // لو حسابك رفضها غيّرها لـ "usd"
+        private readonly ApplicationDbContext db;
+        private readonly BookingService booking;
 
-        private readonly ApplicationDbContext context;
-
-        public CheckoutController(ApplicationDbContext context)
+        public CheckoutController(
+            ApplicationDbContext db,
+            BookingService booking)
         {
-            this.context = context;
+            this.db = db;
+            this.booking = booking;
         }
 
-        private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        private string Uid =>
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-        // ---------- 1) ابدأ الدفع ----------
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Pay()
         {
-            var cart = await context.Carts
-                .Include(c => c.Movie)
-                .Where(c => c.ApplicationUserId == UserId)
+            await booking.CleanupAsync();
+
+            var now = DateTime.Now;
+
+            var items = await db.CartItems
+                .Include(c => c.Seat)
+                .Include(c => c.Showtime).ThenInclude(s => s.Movie)
+                .Include(c => c.Showtime).ThenInclude(s => s.Hall)
+                    .ThenInclude(h => h.Cinema)
+                .Where(c => c.UserId == Uid)
                 .ToListAsync();
 
-            if (!cart.Any())
+            if (items.Count == 0)
             {
-                TempData["Error"] = "Your cart is empty.";
-                return RedirectToAction("Index", "Cart");
+                TempData["BookingError"] =
+                    "Your cart is empty or your seats expired.";
+
+                return RedirectToAction("Index", "Cart", new { area = "Client" });
             }
 
-            if (cart.Any(c => !c.Movie.Status))
+            if (items.Any(i => i.Showtime.StartTime <= now))
             {
-                TempData["Error"] = "Remove the unavailable movies from your cart first.";
-                return RedirectToAction("Index", "Cart");
+                db.CartItems.RemoveRange(
+                    items.Where(i => i.Showtime.StartTime <= now)
+                );
+
+                await db.SaveChangesAsync();
+
+                TempData["BookingError"] =
+                    "Some showtimes have already started and were removed from your cart.";
+
+                return RedirectToAction("Index", "Cart", new { area = "Client" });
             }
 
-            // الأسعار بتتاخد من الـ Database، مش من المتصفح
             var order = new Order
             {
-                ApplicationUserId = UserId,
-                OrderDate = DateTime.UtcNow,
+                UserId = Uid,
+                CreatedAt = now,
+                ExpiresAt = now.AddMinutes(BookingService.PaymentMinutes),
                 Status = OrderStatus.Pending,
-                TotalPrice = cart.Sum(c => c.Movie.Price * c.Count),
-                Items = cart.Select(c => new OrderItem
+                TotalAmount = items.Sum(i => i.Showtime.Price),
+
+                Tickets = items.Select(i => new Ticket
                 {
-                    MovieId = c.MovieId,
-                    Count = c.Count,
-                    Price = c.Movie.Price
+                    ShowtimeId = i.ShowtimeId,
+                    SeatId = i.SeatId,
+                    Price = i.Showtime.Price,
+                    Code = Guid.NewGuid().ToString("N")[..8].ToUpper()
                 }).ToList()
             };
 
-            context.Orders.Add(order);
-            await context.SaveChangesAsync();
-
-            var options = new SessionCreateOptions
-            {
-                Mode = "payment",
-                CustomerEmail = User.FindFirstValue(ClaimTypes.Email),
-                ClientReferenceId = order.Id.ToString(),
-                SuccessUrl = Url.Action("Success", "Checkout", new { area = "Client", orderId = order.Id }, Request.Scheme),
-                CancelUrl = Url.Action("Cancel", "Checkout", new { area = "Client", orderId = order.Id }, Request.Scheme),
-                LineItems = cart.Select(c => new SessionLineItemOptions
-                {
-                    Quantity = c.Count,
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        Currency = Currency,
-                        UnitAmount = (long)Math.Round(c.Movie.Price * 100, MidpointRounding.AwayFromZero),
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = c.Movie.Name
-                        }
-                    }
-                }).ToList()
-            };
+            db.Orders.Add(order);
+            db.CartItems.RemoveRange(items);
 
             try
             {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["BookingError"] =
+                    "Some seats are no longer available. Please check your cart.";
+
+                return RedirectToAction("Index", "Cart", new { area = "Client" });
+            }
+
+            try
+            {
+                var lines = items
+                    .GroupBy(i => i.ShowtimeId)
+                    .Select(g =>
+                    {
+                        var st = g.First().Showtime;
+
+                        return new SessionLineItemOptions
+                        {
+                            Quantity = g.Count(),
+
+                            PriceData = new SessionLineItemPriceDataOptions
+                            {
+                                Currency = "egp",
+                                UnitAmount = (long)Math.Round(
+                                    st.Price * 100,
+                                    MidpointRounding.AwayFromZero
+                                ),
+
+                                ProductData =
+                                    new SessionLineItemPriceDataProductDataOptions
+                                    {
+                                        Name = $"{st.Movie.Name} - {st.Hall.Cinema.Name} / {st.Hall.Name} - {st.StartTime:ddd dd MMM HH:mm}",
+
+                                        Description = "Seats: " +
+                                            string.Join(", ", g.Select(x => x.Seat.Label))
+                                    }
+                            }
+                        };
+                    })
+                    .ToList();
+
+                var successUrl =
+                    Url.Action(
+                        "Success",
+                        "Checkout",
+                        new
+                        {
+                            area = "Client",
+                            orderId = order.Id
+                        },
+                        Request.Scheme
+                    ) + "&session_id={CHECKOUT_SESSION_ID}";
+
+                var options = new SessionCreateOptions
+                {
+                    Mode = "payment",
+                    SuccessUrl = successUrl,
+                    CancelUrl = Url.Action(
+                        "Cancel",
+                        "Checkout",
+                        new
+                        {
+                            area = "Client",
+                            orderId = order.Id
+                        },
+                        Request.Scheme
+                    ),
+
+                    ClientReferenceId = order.Id.ToString(),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(31),
+                    LineItems = lines
+                };
+
                 var session = await new SessionService().CreateAsync(options);
 
-                order.SessionId = session.Id;
-                await context.SaveChangesAsync();
+                order.StripeSessionId = session.Id;
+
+                await db.SaveChangesAsync();
 
                 return Redirect(session.Url);
             }
-            catch (Stripe.StripeException ex)
+            catch (Exception)
             {
-                order.Status = OrderStatus.Cancelled;
-                await context.SaveChangesAsync();
+                await booking.CancelPendingAsync(order);
 
-                TempData["Error"] = "Payment service error: " + ex.Message;
-                return RedirectToAction("Index", "Cart");
+                var expires = DateTime.Now.AddMinutes(
+                    BookingService.HoldMinutes
+                );
+
+                foreach (var i in items)
+                {
+                    db.CartItems.Add(new CartItem
+                    {
+                        UserId = Uid,
+                        ShowtimeId = i.ShowtimeId,
+                        SeatId = i.SeatId,
+                        ExpiresAt = expires
+                    });
+                }
+
+                await db.SaveChangesAsync();
+
+                TempData["BookingError"] =
+                    "Payment could not be started. Please try again.";
+
+                return RedirectToAction("Index", "Cart", new { area = "Client" });
             }
         }
 
-        // ---------- 2) رجع من Stripe بعد الدفع ----------
-        public async Task<IActionResult> Success(int orderId)
+        public async Task<IActionResult> Success(
+            int orderId,
+            string session_id)
         {
-            var order = await context.Orders
-                .Include(o => o.Items).ThenInclude(i => i.Movie)
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.ApplicationUserId == UserId);
+            var order = await LoadOrder(orderId);
 
-            if (order == null) return NotFound();
+            if (order == null)
+                return NotFound();
 
-            // بنتأكد من Stripe نفسه إن الدفع تم، مش من اللينك
-            if (order.Status == OrderStatus.Pending && order.SessionId != null)
+            if (order.Status == OrderStatus.Pending)
             {
-                var session = await new SessionService().GetAsync(order.SessionId);
+                var session = await new SessionService().GetAsync(session_id);
 
-                if (session.PaymentStatus == "paid")
+                if (session.Id == order.StripeSessionId &&
+                    session.PaymentStatus == "paid")
                 {
                     order.Status = OrderStatus.Paid;
-                    order.PaymentIntentId = session.PaymentIntentId;
-
-                    var movieIds = order.Items.Select(i => i.MovieId).ToList();
-                    await context.Carts
-                        .Where(c => c.ApplicationUserId == UserId && movieIds.Contains(c.MovieId))
-                        .ExecuteDeleteAsync();
-
-                    await context.SaveChangesAsync();
+                    await db.SaveChangesAsync();
                 }
-            }
-
-            if (order.Status != OrderStatus.Paid)
-            {
-                TempData["Error"] = "We couldn't confirm your payment.";
-                return RedirectToAction("Index", "Cart");
             }
 
             return View(order);
         }
 
-        // ---------- 3) لغى الدفع ----------
         public async Task<IActionResult> Cancel(int orderId)
         {
-            var order = await context.Orders
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.ApplicationUserId == UserId);
+            var order = await db.Orders
+                .FirstOrDefaultAsync(
+                    o => o.Id == orderId && o.UserId == Uid
+                );
 
             if (order != null && order.Status == OrderStatus.Pending)
             {
-                order.Status = OrderStatus.Cancelled;
-                await context.SaveChangesAsync();
+                await booking.CancelPendingAsync(order);
+
+                if (!string.IsNullOrEmpty(order.StripeSessionId))
+                {
+                    try
+                    {
+                        await new SessionService().ExpireAsync(
+                            order.StripeSessionId
+                        );
+                    }
+                    catch
+                    {
+                    }
+                }
             }
 
-            TempData["Error"] = "Payment was cancelled. Your cart is still here.";
-            return RedirectToAction("Index", "Cart");
+            TempData["BookingError"] =
+                "Payment was cancelled. Your seats were released.";
+
+            return RedirectToAction("Index", "Cart", new { area = "Client" });
         }
 
-        // ---------- طلباتي ----------
         public async Task<IActionResult> Orders()
         {
-            var orders = await context.Orders
-                .Include(o => o.Items).ThenInclude(i => i.Movie)
-                .Where(o => o.ApplicationUserId == UserId && o.Status == OrderStatus.Paid)
-                .OrderByDescending(o => o.OrderDate)
+            await booking.CleanupAsync();
+
+            var orders = await db.Orders
+                .Include(o => o.Tickets).ThenInclude(t => t.Seat)
+                .Include(o => o.Tickets).ThenInclude(t => t.Showtime)
+                    .ThenInclude(s => s.Movie)
+                .Include(o => o.Tickets).ThenInclude(t => t.Showtime)
+                    .ThenInclude(s => s.Hall).ThenInclude(h => h.Cinema)
+                .Where(o => o.UserId == Uid && o.Status == OrderStatus.Paid)
+                .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
             return View(orders);
         }
+
+        private Task<Order?> LoadOrder(int id) =>
+            db.Orders
+                .Include(o => o.Tickets).ThenInclude(t => t.Seat)
+                .Include(o => o.Tickets).ThenInclude(t => t.Showtime)
+                    .ThenInclude(s => s.Movie)
+                .Include(o => o.Tickets).ThenInclude(t => t.Showtime)
+                    .ThenInclude(s => s.Hall).ThenInclude(h => h.Cinema)
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == Uid);
     }
 }

@@ -1,0 +1,63 @@
+﻿@using Cinema.Helpers
+@model Cinema.ViewModels.SeatMapVM
+
+@{
+    ViewData["Title"] = "Choose your seats";
+    var s = Model.Showtime;
+}
+
+<link rel="stylesheet" href="~/css/booking.css" asp-append-version="true" />
+
+<div class="container py-4">
+    <a asp-controller="Home" asp-action="Details" asp-route-id="@s.MovieId" class="text-secondary text-decoration-none">← Back to movie</a>
+    <h2 class="mt-2 mb-1">@s.Movie.Name</h2>
+    <p class="text-secondary mb-4">
+        @s.Hall.Cinema.Name · @s.Hall.Name · @s.StartTime.ToString("ddd dd MMM, hh:mm tt") · @s.Price.ToString("0.##") EGP / seat
+    </p>
+
+    @if (TempData["BookingError"] is string err)
+    {
+        <div class="alert alert-danger">@err</div>
+    }
+
+    <form asp-action="Hold" method="post" id="seatForm" data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-max="@BookingService.MaxSeats">
+        <input type="hidden" name="showtimeId" value="@s.Id" />
+
+        <div class="bk-screen">SCREEN</div>
+
+        <div class="bk-map">
+            @foreach (var row in Model.Seats.GroupBy(x => x.Row))
+            {
+                <div class="bk-row">
+                    <span class="bk-row__label">@row.Key</span>
+                    @foreach (var seat in row)
+                    {
+                        bool taken = Model.Taken.Contains(seat.Id);
+                        bool mine = Model.Mine.Contains(seat.Id);
+                        <label class="bk-seat @(taken ? "bk-seat--taken" : "")" title="@seat.Label">
+                            <input type="checkbox" name="seatIds" value="@seat.Id" checked="@mine" disabled="@taken" />
+                            <span>@seat.Number</span>
+                        </label>
+                    }
+                    <span class="bk-row__label">@row.Key</span>
+                </div>
+            }
+        </div>
+
+        <div class="bk-legend">
+            <span><i class="bk-dot"></i> Available</span>
+            <span><i class="bk-dot bk-dot--sel"></i> Selected</span>
+            <span><i class="bk-dot bk-dot--taken"></i> Taken</span>
+        </div>
+
+        <div class="bk-bar">
+            <div>
+                <strong id="bkCount">0</strong> seat(s) · <strong id="bkTotal">0</strong> EGP
+                <div class="small text-secondary">Seats are held for @BookingService.HoldMinutes minutes after you continue.</div>
+            </div>
+            <button type="submit" class="btn btn-warning fw-semibold px-4">Continue</button>
+        </div>
+    </form>
+</div>
+
+<script src="~/js/booking.js" asp-append-version="true"></script>

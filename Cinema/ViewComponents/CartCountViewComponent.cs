@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿
+using System.Security.Claims;
 using Cinema.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,23 +8,28 @@ namespace Cinema.ViewComponents
 {
     public class CartCountViewComponent : ViewComponent
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext db;
 
-        public CartCountViewComponent(ApplicationDbContext context)
+        public CartCountViewComponent(ApplicationDbContext db)
         {
-            this.context = context;
+            this.db = db;
         }
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
             int count = 0;
 
-            if (UserClaimsPrincipal.Identity?.IsAuthenticated == true)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                var userId = UserClaimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-                count = await context.Carts
-                    .Where(c => c.ApplicationUserId == userId)
-                    .SumAsync(c => c.Count);
+                var uid = UserClaimsPrincipal.FindFirstValue(
+                    ClaimTypes.NameIdentifier
+                );
+
+                var now = DateTime.Now;
+
+                count = await db.CartItems.CountAsync(
+                    c => c.UserId == uid && c.ExpiresAt > now
+                );
             }
 
             return View(count);

@@ -28,7 +28,7 @@
                 <a class="@Active("Halls")" asp-area="Admin" asp-controller="Halls" asp-action="Index">🪑 Halls</a>
                 <a class="@Active("Showtimes")" asp-area="Admin" asp-controller="Showtimes" asp-action="Index">🕒 Showtimes</a>
                 <a class="@Active("Categories")" asp-area="Admin" asp-controller="Categories" asp-action="Index">🏷 Categories</a>
-
+                <a class="@Active("Bookings")" asp-area="Admin" asp-controller="Bookings" asp-action="Index">🎫 Bookings</a>
                 @if (User.IsInRole(SD.SuperAdmin))
                 {
                     <a class="@Active("Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">👥 Users</a>

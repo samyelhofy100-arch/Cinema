@@ -1,0 +1,49 @@
+﻿@using Cinema.ViewModels
+@model List<ShowtimeSlotVM>
+
+<link rel="stylesheet" href="~/css/booking.css" asp-append-version="true" />
+
+<section class="bk-slots">
+    <h3 class="bk-title">🎟️ Showtimes</h3>
+
+    @if (!Model.Any())
+    {
+        <p class="text-secondary">No showtimes in the next 7 days.</p>
+    }
+    else
+    {
+        @foreach (var day in Model.GroupBy(s => s.StartTime.Date))
+        {
+            <div class="bk-day">
+                <div class="bk-day__label">@day.Key.ToString("dddd, dd MMM")</div>
+                @foreach (var cinema in day.GroupBy(s => s.CinemaName))
+                {
+                    <div class="bk-cinema">
+                        <div class="bk-cinema__name">@cinema.Key</div>
+                        <div class="bk-times">
+                            @foreach (var s in cinema)
+                            {
+                                if (s.SeatsLeft > 0)
+                                {
+                                    <a class="bk-time" asp-area="Client" asp-controller="Booking" asp-action="Seats" asp-route-showtimeId="@s.ShowtimeId">
+                                        <strong>@s.StartTime.ToString("hh:mm tt")</strong>
+                                        <small>@s.HallName · @s.Price.ToString("0.##") EGP</small>
+                                        <small class="bk-left">@s.SeatsLeft seats left</small>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="bk-time bk-time--full">
+                                        <strong>@s.StartTime.ToString("hh:mm tt")</strong>
+                                        <small>@s.HallName</small>
+                                        <small>Sold out</small>
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</section>

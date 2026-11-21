@@ -34,7 +34,7 @@ namespace Cinema.Areas.Admin.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HallFormVM vm)
         {
-            vm.Name = vm.Name.Trim();
+            vm.Name = (vm.Name ?? string.Empty).Trim();
 
             if (ModelState.IsValid && context.Halls.Any(h => h.CinemaId == vm.CinemaId && h.Name == vm.Name))
                 ModelState.AddModelError(nameof(vm.Name), "This cinema already has a hall with this name.");

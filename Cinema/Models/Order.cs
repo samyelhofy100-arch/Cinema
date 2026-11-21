@@ -1,25 +1,21 @@
-﻿// Models/Order.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Net.Sockets;
 
 namespace Cinema.Models
 {
+
+    public enum OrderStatus { Pending, Paid, Cancelled, Expired }
+
     public class Order
     {
         public int Id { get; set; }
-
-        public string ApplicationUserId { get; set; } = string.Empty;
-        public ApplicationUser ApplicationUser { get; set; } = null!;
-
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
-
-        [Precision(18, 2)]
-        public decimal TotalPrice { get; set; }
-
+        public string UserId { get; set; } = string.Empty;
+        public ApplicationUser User { get; set; } = null!;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime ExpiresAt { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
-
-        public string? SessionId { get; set; }
-        public string? PaymentIntentId { get; set; }
-
-        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+        [Precision(18, 2)] public decimal TotalAmount { get; set; }
+        public string? StripeSessionId { get; set; }
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     }
 }

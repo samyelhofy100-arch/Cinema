@@ -13,7 +13,7 @@ namespace Cinema.Areas.Admin.Controllers
         private readonly IRepository<Actor> _actorRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Cinemas> _cinemasRepository;
-        private readonly IRepository<OrderItem> _orderItemRepository;
+        private readonly IRepository<Showtime> _showtimeRepository;
         private readonly IMovieActorRepository _movieActorRepository;
         private readonly IMovieSubImageRepository _movieSubImageRepository;
 
@@ -32,7 +32,7 @@ namespace Cinema.Areas.Admin.Controllers
             IRepository<Cinemas> cinemasRepository,
             IMovieActorRepository movieActorRepository,
             IMovieSubImageRepository movieSubImageRepository,
-            IRepository<OrderItem> orderItemRepository)
+            IRepository<Showtime> showtimeRepository)
         {
             _movieRepository = movieRepository;
             _actorRepository = actorRepository;
@@ -40,7 +40,7 @@ namespace Cinema.Areas.Admin.Controllers
             _cinemasRepository = cinemasRepository;
             _movieActorRepository = movieActorRepository;
             _movieSubImageRepository = movieSubImageRepository;
-            _orderItemRepository = orderItemRepository;
+            _showtimeRepository = showtimeRepository;
         }
 
         public async Task<IActionResult> Index(int page = 1)
@@ -326,7 +326,7 @@ namespace Cinema.Areas.Admin.Controllers
                 return NotFound();
 
             // Prevent deleting movies that have orders.
-            if (await _orderItemRepository.AnyAsync(i => i.MovieId == id))
+            if (await _showtimeRepository.AnyAsync(s => s.MovieId == id))
             {
                 TempData["Error"] =
                     $"\"{movie.Name}\" has orders and cannot be deleted. Mark it as not available instead.";
