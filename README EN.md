@@ -117,7 +117,3 @@ Cinema/
 - [ ] Stripe webhook for payment confirmation
 - [ ] Email tickets / QR codes
 - [ ] Admin orders and refunds
-
-## 📄 License
-
-This project is for learning purposes. Add a license of your choice (e.g. MIT) before sharing publicly.
